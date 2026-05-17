@@ -114,7 +114,7 @@ async function tick() {
     // 2. Stop loss
     if (pnlPct <= -STOP_LOSS_PCT * 100) {
       try {
-        const r = await closePosition(p.pubkey ?? p.positionPubkey);
+        const r = await closePosition(p.pubkey ?? p.positionPubkey, pubkey());
         const sig = await signAndSend((r as any).transaction);
         log({ type: "stop_loss", marketId: id, pnlPct, sig });
         await sendToMathis(`🛑 Stop loss ${id} @ ${pnlPct.toFixed(1)}% — closed via ${sig.slice(0, 12)}...`);
@@ -135,7 +135,7 @@ async function tick() {
 
       if (gapNow <= TAKE_PROFIT_BUFFER || convergedBy >= 0.6) {
         try {
-          const r = await closePosition(p.pubkey ?? p.positionPubkey);
+          const r = await closePosition(p.pubkey ?? p.positionPubkey, pubkey());
           const sig = await signAndSend((r as any).transaction);
           log({ type: "take_profit", marketId: id, gapNow, convergedBy, pnlPct, sig });
           await sendToMathis(`💵 Take profit ${id} (${(convergedBy * 100).toFixed(0)}% converged, ${pnlPct.toFixed(1)}% pnl) — closed via ${sig.slice(0, 12)}...`);

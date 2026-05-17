@@ -85,10 +85,12 @@ export async function getPositions(ownerPubkey: string): Promise<Position[]> {
   return get<Position[]>(`/positions?${qs.toString()}`);
 }
 
-export async function closePosition(positionPubkey: string) {
+export async function closePosition(positionPubkey: string, ownerPubkey: string) {
+  // DELETE with JSON body — Jupiter requires the ownerPubkey to authorize.
   const r = await fetch(`${BASE_URL}/positions/${positionPubkey}`, {
     method: "DELETE",
     headers: headers(),
+    body: JSON.stringify({ ownerPubkey }),
   });
   if (!r.ok) throw new Error(`Jupiter DELETE position → ${r.status}: ${await r.text()}`);
   return r.json();
