@@ -26,6 +26,9 @@ import { kellySize } from "./lib/kelly.ts";
 import { pubkey, signAndSend } from "./lib/wallet.ts";
 import { sendToMathis, pollNewReplies } from "./lib/telegram.ts";
 import { loadActiveSkills, renderSkillsForPrompt } from "./lib/skills.ts";
+import { runMultiAgentCycle, type MarketCtx } from "./sub-agents.ts";
+
+const USE_MULTI_AGENT = (process.env.USE_MULTI_AGENT ?? "true") !== "false";
 
 const ASSIGNED_MARKETS = (process.env.ASSIGNED_MARKETS ?? "").split(",").map(s => s.trim()).filter(Boolean);
 const POLL_INTERVAL_MS = Number(process.env.EXPERT_INTERVAL_MS ?? 90_000);
@@ -247,25 +250,78 @@ async function runOneExpertCycle(marketId: string): Promise<void> {
 
   const position = await ourOpenPosition(marketId);
 
-  const sys = EXPERT_SYSTEM(state, marketData, position);
-  const user = `Run cycle ${state.cycleCount}. Update your understanding, decide action, write new notes.`;
-
+  // -------- MULTI-AGENT DISPATCH --------
+  // Build the shared market context once. Pass to runMultiAgentCycle which
+  // dispatches resolution + evidence + base-rate in parallel, then aggregates
+  // via pricing-math. Each sub-agent is a separate Claude call.
   let parsed: any;
-  try {
-    const { text } = await runAgent({
-      model: "specialist",
-      system: sys,
-      user,
-      tools: researchTools,
-      toolHandler: handleResearch,
-      maxTurns: 8,
-      maxTokens: 3000,
-    });
-    parsed = extractJson(text);
-  } catch (e: any) {
-    log({ type: "expert_research_error", marketId, error: e.message });
-    saveState(state);
-    return;
+  let multiAgentTrace: any = null;
+
+  if (USE_MULTI_AGENT) {
+    const ctx: MarketCtx = {
+      marketId,
+      question: state.question,
+      rulesPrimary: state.rulesPrimary,
+      closeTimeIso: marketData.closeTime ? new Date(marketData.closeTime * 1000).toISOString() : "?",
+      buyYes: (marketData.pricing?.buyYesPriceUsd ?? 500000) / 1e6,
+      buyNo: (marketData.pricing?.buyNoPriceUsd ?? 500000) / 1e6,
+      positionLine: position
+        ? `OPEN POSITION: ${position.isYes ? "YES" : "NO"} side, contracts=${position.contracts}, avgPrice=$${(Number(position.avgPriceUsd) / 1e6).toFixed(3)}, markPrice=$${(Number(position.markPriceUsd) / 1e6).toFixed(3)}, pnl=$${(Number(position.pnlUsdAfterFees ?? 0) / 1e6).toFixed(2)}`
+        : "NO open position on this market yet.",
+      priorNotes: state.contextNotes,
+      priorForecast: state.lastForecast,
+    };
+
+    try {
+      const result = await runMultiAgentCycle(ctx, MAX_BET_USD, CONVICTION_THRESHOLD);
+      const d = result.decision;
+      multiAgentTrace = result.trace;
+      log({
+        type: "multi_agent_trace",
+        marketId,
+        cycle: state.cycleCount,
+        durations: result.trace.durations,
+        baseRate: result.trace.baseRate.baseRate,
+        evidenceDirection: result.trace.evidence.netDirection,
+        signalCount: result.trace.evidence.signals.length,
+        ambiguityCount: result.trace.resolution.ambiguities.length,
+      });
+      parsed = {
+        forecast: {
+          probabilityYes: d.probabilityYes,
+          confidence: d.confidence,
+          side: d.side,
+          reasoning: d.reasoning,
+        },
+        action: d.action,
+        newNotes: d.newNotes,
+        rationale: d.reasoning,
+      };
+    } catch (e: any) {
+      log({ type: "multi_agent_error", marketId, cycle: state.cycleCount, error: e.message });
+      saveState(state);
+      return;
+    }
+  } else {
+    // Legacy single-specialist path (kept for fallback)
+    const sys = EXPERT_SYSTEM(state, marketData, position);
+    const user = `Run cycle ${state.cycleCount}. Update your understanding, decide action, write new notes.`;
+    try {
+      const { text } = await runAgent({
+        model: "specialist",
+        system: sys,
+        user,
+        tools: researchTools,
+        toolHandler: handleResearch,
+        maxTurns: 8,
+        maxTokens: 3000,
+      });
+      parsed = extractJson(text);
+    } catch (e: any) {
+      log({ type: "expert_research_error", marketId, error: e.message });
+      saveState(state);
+      return;
+    }
   }
 
   if (parsed.forecast) state.lastForecast = parsed.forecast;
@@ -275,7 +331,7 @@ async function runOneExpertCycle(marketId: string): Promise<void> {
     }
     if (state.contextNotes.length > 30) state.contextNotes = state.contextNotes.slice(-30);
   }
-  log({ type: "expert_forecast", marketId, cycle: state.cycleCount, forecast: parsed.forecast, action: parsed.action, rationale: parsed.rationale });
+  log({ type: "expert_forecast", marketId, cycle: state.cycleCount, forecast: parsed.forecast, action: parsed.action, rationale: parsed.rationale, multiAgent: !!multiAgentTrace });
 
   if (parsed.action === "trade" && !position) {
     const yesPrice = (marketData.pricing?.buyYesPriceUsd ?? 500000) / 1e6;
