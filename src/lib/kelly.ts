@@ -7,6 +7,7 @@
  */
 
 const FRACTIONAL_KELLY = 0.25;
+const MIN_BET_USD = Number(process.env.MIN_BET_USD ?? 5); // Jupiter Predict floor
 
 export type KellyInput = {
   probabilityEstimated: number; // specialist's probability of YES
@@ -51,10 +52,17 @@ export function kellySize(input: KellyInput): KellySize {
   const rawBet = fractional * input.bankrollUsd;
   const cappedBet = Math.min(rawBet, input.maxBetUsd);
 
+  // Jupiter Predict floor: orders below MIN_BET_USD are rejected.
+  // If Kelly says "bet something" but smaller than the floor, round UP to
+  // the floor (slightly over-Kelly, but capped at MAX_BET_USD anyway).
+  const finalBet = cappedBet > 0 && cappedBet < MIN_BET_USD
+    ? Math.min(MIN_BET_USD, input.maxBetUsd)
+    : cappedBet;
+
   return {
-    betUsd: Math.max(0, cappedBet),
+    betUsd: Math.max(0, finalBet),
     side,
     edgePct: edge,
-    rationale: `Edge ${(edge * 100).toFixed(1)}% · Kelly ${(fullKelly * 100).toFixed(1)}% · 1/4 Kelly × conf ${(input.confidence * 100).toFixed(0)}% → $${cappedBet.toFixed(2)}`,
+    rationale: `Edge ${(edge * 100).toFixed(1)}% · Kelly ${(fullKelly * 100).toFixed(1)}% · 1/4 Kelly × conf ${(input.confidence * 100).toFixed(0)}% → raw $${cappedBet.toFixed(2)} → final $${finalBet.toFixed(2)} (Jupiter min $${MIN_BET_USD})`,
   };
 }
