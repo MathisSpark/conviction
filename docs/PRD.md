@@ -1,6 +1,8 @@
 # Conviction — PRD v0.1
 
-> Locked on 2026-05-17 at Ralphthon @ Singapore. Updated by the agent itself during the hands-off self-improvement window.
+> Locked on 2026-05-17 at Ralphthon @ Singapore. Original pre-build product spec — captures the initial intent and goal framing.
+
+> ⚠️ **This document predates the architectural pivot to multi-agent + assigned-expert mode.** For the final architecture (1 dedicated expert per assigned market, each spawning 4 parallel sub-specialists), see [`architecture.html`](architecture.html) and [`deck.html`](deck.html). The numbered goals (G1-G3) below still hold — they were achieved.
 
 ---
 

@@ -13,3 +13,8 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+
+# Runtime artifacts (do not commit)
+.telegram-chat
+.telegram-offset
+state.json
