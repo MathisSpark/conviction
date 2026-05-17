@@ -14,13 +14,24 @@
 
 import * as jupiter from "./lib/jupiter.ts";
 import { evaluateAndTrade } from "./desks/public-markets.ts";
+import { reflectAndPropose } from "./lib/self-improve.ts";
+import { loadActiveSkills } from "./lib/skills.ts";
 import type { Market } from "./types.ts";
 import { appendFileSync } from "fs";
 
 const POLL_INTERVAL_MS = Number(process.env.POLL_INTERVAL_MS ?? 60_000);
 const TRAIL_FILE = process.env.TRAIL_FILE ?? "./trail.jsonl";
 
-const DEMO_QUERIES = ["Tesla", "NVIDIA", "Apple", "Microsoft"]; // narrow scope for the MVP
+// Markets per PRD §4: Operational KPI + R&D / Product release.
+// Skips: BTC/oil/gold ladders, daily up-down, tweet count — too TA/latency-arb.
+const DEMO_QUERIES = [
+  "Tesla deliveries",
+  "NVIDIA earnings",
+  "Microsoft earnings",
+  "Gemini",
+  "Cybercab",
+  "Starship",
+];
 
 const seenMarkets = new Set<string>();
 
@@ -100,9 +111,14 @@ function daysUntil(iso: string): number {
   return ms / (1000 * 60 * 60 * 24);
 }
 
+let cycleNum = 0;
+const REFLECT_EVERY = Number(process.env.REFLECT_EVERY ?? 5);
+
 export async function runCycle(): Promise<void> {
+  cycleNum += 1;
   const cycleStart = Date.now();
-  log({ type: "cycle_start", at: new Date().toISOString() });
+  const skills = loadActiveSkills();
+  log({ type: "cycle_start", n: cycleNum, at: new Date().toISOString(), activeSkills: skills.map(s => s.name) });
 
   const markets = await discoverMarkets();
   log({ type: "discovered", count: markets.length, ids: markets.map(m => m.marketId) });
@@ -117,7 +133,17 @@ export async function runCycle(): Promise<void> {
     }
   }
 
-  log({ type: "cycle_end", duration_ms: Date.now() - cycleStart });
+  // Self-improvement: every N cycles, reflect on the trail and propose a Skill.
+  if (cycleNum % REFLECT_EVERY === 0) {
+    try {
+      const r = await reflectAndPropose();
+      log({ type: "reflect", n: cycleNum, ...r });
+    } catch (e: any) {
+      log({ type: "reflect_error", n: cycleNum, error: e.message });
+    }
+  }
+
+  log({ type: "cycle_end", n: cycleNum, duration_ms: Date.now() - cycleStart });
 }
 
 export async function runForever(): Promise<void> {

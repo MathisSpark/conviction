@@ -85,7 +85,7 @@ Filter: **informed-aggregation markets** (not TA/latency-arb). Per `research/mar
 - Specialist returns `{ probabilityYes, confidence }`.
 - Compute edge = max(p − yesPrice, (1−p) − noPrice).
 - If `edge ≥ CONVICTION_THRESHOLD` (0.08) AND `confidence ≥ 0.4`, enter.
-- Size = 1/4 Kelly × confidence, capped at `MAX_BET_USD` ($5 in test mode, bump to $20 after first successful trade).
+- Size = 1/4 Kelly × confidence, capped at `MAX_BET_USD` = **$0.50 (locked, no auto-bump)**.
 
 ### 5.2 Exit rule (critical: don't wait for resolution)
 - **Take profit**: market price converges to within `EXIT_BUFFER_PCT` (0.02) of our forecast → close position.
@@ -94,9 +94,10 @@ Filter: **informed-aggregation markets** (not TA/latency-arb). Per `research/mar
 - **Resolution**: claim winnings when market resolves (passive).
 
 ### 5.3 Bankroll rules
-- Total bankroll: $50 (testing) → $50 (no top-up planned).
-- Max position per market: $5.
+- Total bankroll: $50 USDC on wallet `xZSjnVoiCDBC6Q5d6NfDi3ufKwoauWJW1j5WQ5Y3tgY`.
+- Max position per market: **$0.50** (locked for v0 — bump later only after Mathis explicitly says so).
 - Hard stop: pause all trading if account drawdown > 40% ($20 lost).
+- Expected total exposure across 5 trades: $2.50 — leaves $47.50 safety margin.
 
 ---
 
@@ -126,10 +127,16 @@ Each `SKILL.md` has YAML frontmatter `{ name, description }` + a body of instruc
 4. **Accept**: a `skill-acceptor` sub-call (Haiku) reviews the proposal against a checklist (does it have a name? a clear when-to-use description? does it not contradict an active Skill?). If passes → moves to `/skills/active/`.
 5. **Reload**: next cycle starts by reading `/skills/active/` again.
 
-### 6.3 Safety
-- Skills are **additive** to the agent's prompt — they cannot modify orchestrator/trading code at runtime.
-- Skills cannot increase `MAX_BET_USD` or change wallet permissions.
-- Every Skill change is committed to git with `[skill]` prefix for an audit trail.
+### 6.3 What Skills CAN do
+- **Add prompt content** to orchestrator or specialists (heuristics, source priorities, market type expertise).
+- **Spawn new specialists**: a Skill can declare a new specialist (e.g. `gemini-release-watcher`) with its own system prompt + tool list. Orchestrator loads it at next cycle.
+- **Add discovery queries**: extend `DEMO_QUERIES` to cover a new market category.
+
+### 6.4 What Skills CANNOT do (safety)
+- Cannot modify `MAX_BET_USD`, `TOTAL_BANKROLL_USD`, drawdown stop, or any wallet permission.
+- Cannot edit `lib/wallet.ts`, `lib/jupiter.ts`, or `lib/kelly.ts` (the trade execution layer).
+- Cannot delete or override existing active Skills (only add).
+- Every Skill change is git-committed with `[skill] <name>` prefix for audit trail.
 
 ---
 

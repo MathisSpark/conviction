@@ -46,7 +46,12 @@ switch (mode) {
       console.error("Usage: bun run src/index.ts research <marketId>");
       process.exit(1);
     }
-    const m = await jupiter.getMarket(marketId);
+    // Prefer normalized form by going through discoverMarkets; fall back
+    // to raw getMarket if not in the discovery set.
+    const ms = await discoverMarkets();
+    const m = ms.find(x => x.marketId === marketId) ?? (await jupiter.getMarket(marketId) as any);
+    if (!m.marketId) m.marketId = marketId;
+    console.log(`\nResearching ${m.marketId}: ${m.question ?? m.title ?? "(no title)"}`);
     const op = await researchMarket(m);
     console.log("\nOpinion:");
     console.log(JSON.stringify(op, null, 2));

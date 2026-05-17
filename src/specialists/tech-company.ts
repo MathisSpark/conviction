@@ -10,9 +10,10 @@
 
 import { runAgent } from "../lib/claude.ts";
 import { tools, handle } from "../lib/research-tools.ts";
+import { loadActiveSkills, renderSkillsForPrompt } from "../lib/skills.ts";
 import type { Market, SpecialistOpinion } from "../types.ts";
 
-const SYSTEM = `You are the Tech/Company-Outcome research specialist of the Conviction agent.
+const BASE_SYSTEM = `You are the Tech/Company-Outcome research specialist of the Conviction agent.
 
 Your job: given a Jupiter Predict market about a public tech company (Tesla, NVIDIA, Apple, Microsoft, SpaceX, etc.), produce a calibrated probability estimate of the YES outcome.
 
@@ -42,18 +43,37 @@ Rules:
 - Stop after at most 8 tool calls. Quality > quantity.`;
 
 export async function researchMarket(market: Market): Promise<SpecialistOpinion> {
-  const user = `Market: "${market.question}"
-Category: ${market.category}
-Outcomes: ${JSON.stringify(market.outcomes)}
-Volume: $${market.volumeUsd.toLocaleString()} · Liquidity: $${market.liquidityUsd.toLocaleString()}
-Ends at: ${market.endsAt}
+  // Defensive: if invoked with a raw Jupiter market (research mode), the
+  // normalized fields may be missing. Fall back to safe defaults.
+  const q = market.question ?? (market as any).title ?? `(market ${market.marketId})`;
+  const cat = market.category ?? "unknown";
+  const vol = (market.volumeUsd ?? 0).toLocaleString();
+  const liq = (market.liquidityUsd ?? 0).toLocaleString();
+  const ends = market.endsAt ?? "?";
+  const outcomes = JSON.stringify(market.outcomes ?? []);
+
+  const user = `Market: "${q}"
+Category: ${cat}
+Outcomes: ${outcomes}
+Volume: $${vol} · Liquidity: $${liq}
+Ends at: ${ends}
 Market ID: ${market.marketId}
 
 Research this market and output your JSON opinion.`;
 
+  // Inject any active Skills into the system prompt. Skills written by the
+  // agent itself during the self-improvement loop appear here automatically.
+  const skills = loadActiveSkills().filter(s =>
+    s.name === "research-tech-companies" ||
+    s.name === "research-product-releases" ||
+    s.description.toLowerCase().includes("research") ||
+    s.description.toLowerCase().includes("market"),
+  );
+  const system = BASE_SYSTEM + renderSkillsForPrompt(skills, { full: true });
+
   const { text, trace } = await runAgent({
     model: "specialist",
-    system: SYSTEM,
+    system,
     user,
     tools,
     toolHandler: handle,
