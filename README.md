@@ -21,15 +21,30 @@ Most prediction markets fail because they lack informed traders. 92% of Polymark
 1. Has its own `./agents/<marketId>/AGENT.md` (system prompt with full market criteria)
 2. Has its own `./agents/<marketId>/state.json` (cycle count, forecasts, trades, accumulated notes)
 3. Runs every 90s **on that single market only — never switches**
-4. Each cycle: reads its state → fetches live market data → asks Sonnet to update forecast → decides `trade` / `exit` / `hold` → writes new notes → saves state
+4. Each cycle: **dispatches to 4 sub-specialists in parallel** (see below), aggregates their structured outputs, decides `trade` / `exit` / `hold`, writes new notes, saves state
 5. Trades through the same Solana wallet as the other experts (capped at $5/trade, $50 total bankroll)
 6. Self-improves through Skills (see below)
 
-The point: **a dedicated expert on one market for 3 hours accumulates ~30 cumulative notes and refines its forecast cycle by cycle.** That's how human informed traders operate. We just made it parallel and 24/7.
+### Multi-agent dispatch — what happens inside one cycle
+
+The expert is **not one Claude call**. Each cycle, it orchestrates 4 separate Claude sub-agents — each a focused call with its own system prompt — and aggregates their structured outputs into the final decision. See [`src/sub-agents.ts`](src/sub-agents.ts) for the code.
+
+| Sub-agent | Model | Tools | Output |
+|---|---|---|---|
+| `resolution-analyst` | Haiku | none | Exact criteria · resolution source · deadline · ambiguities · edge cases |
+| `evidence-gatherer` | Sonnet | Tavily search, read_url, X scrape | 4-8 signals with quotes and weights · net direction · fresh findings · confidence |
+| `base-rate-historian` | Sonnet | none (training knowledge only) | Comparable past cases · base rate 0-1 · reasoning |
+| `pricing-math` (aggregator) | Sonnet | none | Final probabilityYes · confidence · side · edgePct · action (trade/exit/hold) · citations |
+
+`resolution-analyst` runs first (locks criteria). Then `evidence-gatherer` + `base-rate-historian` run **in parallel**. Then `pricing-math` aggregates all 3 outputs into the final decision. Each sub-agent's trace is logged separately to `expert-trail.jsonl` (search for `multi_agent_trace` events).
+
+The point: **a dedicated expert on one market for 3 hours accumulates ~30 cumulative notes and refines its forecast cycle by cycle — backed by 4 specialists per cycle, each doing one focused job.** That's how human informed-trading teams operate. We just made it parallel and 24/7.
+
+**Real example from the run**: On POLY-2268715 (Gemini 3.2 release), the `pricing-math` aggregator caught that the `base-rate-historian`'s prior (0.12) was outdated due to Sonnet's training cutoff (Gemini 3.x didn't exist when training data was assembled), overrode it with `evidence-gatherer`'s live confirmation that Gemini 3.1 had already shipped, and revised the forecast from NO 0.78 → YES 0.82. Two cycles later, the expert decided its existing NO position was directionally wrong and exited on-chain autonomously ([tx `RtxBTnUk…`](https://solscan.io/tx/RtxBTnUkXYZZ5vyKXvtQN89nJGywbssY5C9avCN2dBDvB47c2tcnnCxAggtb4vcCuhYTF3LGRgZphzfymLuNTEE)). That's **multi-agent meta-reasoning** — agents catching agents.
 
 ## Self-improvement (Anthropic Skills pattern)
 
-Every 5 cycles, the orchestrator reads its own trail, asks itself *"what heuristic, if I had it, would have helped my last trades?"*, drafts a `SKILL.md`, runs it through a safety acceptor (Haiku), then promotes it to `/skills/active/` where every subsequent specialist call picks it up.
+Beyond the 4 hardcoded sub-specialists, **the expert can also spawn entirely new specialists on the fly** when it senses a domain gap. The mechanism: every 5 cycles, the orchestrator reads its own trail, asks itself *"what heuristic or sub-agent, if I had it, would have helped my last trades?"*, drafts a `SKILL.md`, runs it through a safety acceptor (Haiku), then promotes it to `/skills/active/` where every subsequent specialist call picks it up.
 
 **Skills written by the agent during this run** (no human edits):
 
@@ -46,12 +61,13 @@ See [`docs/startup-desk-demo.md`](docs/startup-desk-demo.md) for a live example 
 
 ## Stack
 
-- **Claude Agent SDK** — Sonnet 4.6 for experts, Haiku 4.5 for the skill acceptor, Opus 4.7 for orchestration
-- **Anthropic Skills** — filesystem-based capability modules, agent self-writes new ones
-- **Jupiter Predict API** — unified Polymarket + Kalshi access on Solana
+- **Claude Agent SDK** — Sonnet 4.6 for evidence-gatherer / base-rate-historian / pricing-math sub-agents, Haiku 4.5 for resolution-analyst and skill acceptor
+- **Multi-agent dispatch** — 4 sub-agents per market per cycle, dispatched in parallel where possible ([`src/sub-agents.ts`](src/sub-agents.ts))
+- **Anthropic Skills** — filesystem-based capability modules, agent self-writes new ones, can spawn new specialists dynamically
+- **Jupiter Prediction API** — Solana-native interface that brings Polymarket markets on-chain ([`dev.jup.ag`](https://dev.jup.ag/docs/guides/how-to-build-a-prediction-market-app-on-solana))
 - **Solana mainnet** — BIP39 seed-derived wallet, $5 cap per trade, 40% drawdown stop
 - **Helius RPC** — chain reads + tx broadcast
-- **Tavily** — web search for the research tool
+- **Tavily** — web search for the evidence-gatherer sub-agent
 - **twitterapi.io** — X scrape (optional)
 - **Hono** — minimal dashboard with SSE for live trail
 
