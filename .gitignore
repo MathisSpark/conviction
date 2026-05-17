@@ -2,6 +2,8 @@ node_modules/
 .env
 .env.local
 *.log
+*.jsonl
+trail.jsonl
 .DS_Store
 dist/
 .next/
