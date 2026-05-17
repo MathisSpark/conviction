@@ -3,7 +3,7 @@
  * events. Run with: bun run src/smoke-test.ts
  */
 
-import "dotenv/config";
+import "./lib/env.ts";
 import { listEvents, searchEvents, getMarket } from "./lib/jupiter.ts";
 
 async function main() {

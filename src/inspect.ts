@@ -4,7 +4,7 @@
  *
  * Run: bun run src/inspect.ts
  */
-import "dotenv/config";
+import "./lib/env.ts";
 import { searchEvents, getEvent } from "./lib/jupiter.ts";
 
 const results = await searchEvents("TSLA", 3);

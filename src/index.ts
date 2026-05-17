@@ -8,7 +8,7 @@
  *   discover    — list candidate markets without trading
  */
 
-import "dotenv/config";
+import "./lib/env.ts";
 import { runForever, runCycle, discoverMarkets } from "./orchestrator.ts";
 import { researchMarket } from "./specialists/tech-company.ts";
 import * as jupiter from "./lib/jupiter.ts";
