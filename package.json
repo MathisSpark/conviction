@@ -1,0 +1,27 @@
+{
+  "name": "conviction",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "AI agents that trade prediction markets with informed conviction — and apply the same engine to startup decisions.",
+  "scripts": {
+    "dev": "bun run --watch src/index.ts",
+    "start": "bun run src/index.ts",
+    "trade": "bun run src/orchestrator.ts",
+    "research": "bun run src/specialists/tech-company.ts",
+    "dashboard": "bun run src/dashboard/server.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.40.0",
+    "@solana/spl-token": "^0.4.8",
+    "@solana/web3.js": "^1.95.0",
+    "bs58": "^6.0.0",
+    "dotenv": "^16.4.5",
+    "hono": "^4.6.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.5.0"
+  }
+}

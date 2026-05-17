@@ -1,0 +1,4 @@
+{"ts":1778987819099,"type":"discover_error","query":"Tesla","error":"JUPITER_API_KEY missing — get one at developers.jup.ag/portal"}
+{"ts":1778987819100,"type":"discover_error","query":"NVIDIA","error":"JUPITER_API_KEY missing — get one at developers.jup.ag/portal"}
+{"ts":1778987819100,"type":"discover_error","query":"Apple","error":"JUPITER_API_KEY missing — get one at developers.jup.ag/portal"}
+{"ts":1778987819100,"type":"discover_error","query":"Microsoft","error":"JUPITER_API_KEY missing — get one at developers.jup.ag/portal"}
