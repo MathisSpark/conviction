@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Conviction — Architecture</title>
+<style>
+  :root {
+    --bg: #0b0d12;
+    --bg-card: #14181f;
+    --bg-card-2: #1c2129;
+    --fg: #e8eaed;
+    --fg-dim: #9aa0a6;
+    --fg-very-dim: #5f6368;
+    --accent: #4ade80;
+    --accent-dim: #166534;
+    --warn: #fbbf24;
+    --danger: #f87171;
+    --border: #2a2f37;
+    --code-bg: #0a0c10;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--fg); font-family: var(--font-sans); line-height: 1.55; }
+  body { padding: 40px 24px 80px; }
+  .container { max-width: 1080px; margin: 0 auto; }
+  header { border-bottom: 1px solid var(--border); padding-bottom: 24px; margin-bottom: 36px; }
+  h1 { font-size: 36px; letter-spacing: -1px; margin: 0 0 8px; font-weight: 700; }
+  .subtitle { color: var(--fg-dim); font-size: 16px; margin: 0; }
+  .meta { color: var(--fg-very-dim); font-size: 13px; margin-top: 10px; }
+  .meta a { color: var(--fg-dim); }
+  h2 { font-size: 24px; letter-spacing: -0.4px; margin: 56px 0 12px; font-weight: 600; border-left: 3px solid var(--accent); padding-left: 12px; }
+  h3 { font-size: 17px; margin: 28px 0 8px; color: var(--fg); font-weight: 600; }
+  p { color: var(--fg); margin: 8px 0 14px; font-size: 15px; }
+  .lead { color: var(--fg); font-size: 16px; margin: 16px 0 28px; }
+  code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: var(--font-mono); font-size: 13px; color: var(--accent); }
+  pre { background: var(--code-bg); padding: 14px 18px; border-radius: 8px; overflow-x: auto; font-family: var(--font-mono); font-size: 13px; border: 1px solid var(--border); }
+  .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin: 16px 0 32px; }
+  .card-title { font-size: 13px; color: var(--fg-very-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .diagram { background: var(--bg-card-2); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin: 14px 0 20px; overflow-x: auto; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 16px 0; }
+  @media (max-width: 760px) { .grid-2 { grid-template-columns: 1fr; } }
+  .pill { display: inline-block; padding: 2px 10px; background: var(--accent-dim); color: var(--accent); border-radius: 999px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 4px 0 0; }
+  .pill.warn { background: rgba(251, 191, 36, 0.18); color: var(--warn); }
+  .pill.danger { background: rgba(248, 113, 113, 0.18); color: var(--danger); }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); font-size: 14px; vertical-align: top; }
+  th { color: var(--fg-very-dim); font-weight: 500; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; }
+  td code { font-size: 12px; }
+  ul { padding-left: 22px; }
+  li { margin: 5px 0; }
+  .nav { position: sticky; top: 0; background: rgba(11, 13, 18, 0.9); backdrop-filter: blur(8px); padding: 14px 0; margin: -40px -24px 32px; border-bottom: 1px solid var(--border); z-index: 10; }
+  .nav-inner { max-width: 1080px; margin: 0 auto; padding: 0 24px; display: flex; gap: 18px; flex-wrap: wrap; font-size: 13px; }
+  .nav a { color: var(--fg-dim); text-decoration: none; padding: 4px 0; }
+  .nav a:hover { color: var(--accent); }
+  .quote { border-left: 3px solid var(--accent); padding-left: 14px; color: var(--fg-dim); font-style: italic; margin: 14px 0; font-size: 15px; }
+  .footer { margin-top: 80px; padding-top: 24px; border-top: 1px solid var(--border); color: var(--fg-very-dim); font-size: 13px; }
+  .footer a { color: var(--fg-dim); }
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="#overview">Overview</a>
+    <a href="#expert">Expert loop</a>
+    <a href="#per-expert">Expert files</a>
+    <a href="#skills">Self-improvement</a>
+    <a href="#data-flow">Data flow</a>
+    <a href="#spark-fork">Spark fork</a>
+    <a href="#runtime">Runtime stats</a>
+  </div>
+</nav>
+
+<div class="container">
+<header>
+  <h1>Conviction · architecture</h1>
+  <p class="subtitle">An AI market maker that reduces the Minimum Viable Liquidity floor on prediction markets, by synthesizing information at machine speed.</p>
+  <p class="meta">Built at Ralphthon @ Singapore · 2026-05-17 · <a href="https://github.com/MathisSpark/conviction">github.com/MathisSpark/conviction</a> · also see <a href="deck.html">deck.html</a></p>
+</header>
+
+<!-- 1. OVERVIEW -->
+<h2 id="overview">1 · Overview</h2>
+
+<p class="lead">
+Conviction is a <strong>fleet of dedicated AI experts</strong> that each cover one prediction market on Jupiter Predict. A human assigns each market; the expert lives on it for the whole hands-off window, grows cumulative context, refines its forecast cycle by cycle, and trades when its forecast diverges enough from market price.
+</p>
+
+<div class="diagram">
+<pre class="mermaid">
+flowchart LR
+    M[Mathis the Spark] --> E[experts.ts runner]
+    E --> A1[Expert A POLY-1280315]
+    E --> A2[Expert B POLY-1280314]
+    E --> A3[Expert C POLY-2268715]
+    A1 --> JP[Jupiter Predict Solana mainnet]
+    A2 --> JP
+    A3 --> JP
+    JP --> W[Shared Solana wallet 50 USDC]
+    A1 --> TG[Telegram bot ClaudeHackathonBot]
+    A2 --> TG
+    A3 --> TG
+    TG --> M
+</pre>
+</div>
+
+<div class="card">
+<div class="card-title">Why dedicated experts not orchestrator surfing</div>
+<p class="quote">
+Prediction markets are not deal flow you surf. They are research subjects you settle on. A dedicated expert on one market for 3 hours accumulates ~30 cumulative notes, refines its forecast cycle by cycle, and only trades when its OWN forecast diverges enough from market price. That is how human informed traders operate. We just made it parallel and 24/7.
+</p>
+</div>
+
+<!-- 2. EXPERT LOOP -->
+<h2 id="expert">2 · Expert mode — the runtime loop</h2>
+
+<p>One expert process runs per market. They share a single wallet but maintain independent state. Each cycle is one Claude Sonnet call with the expert's full state injected into the system prompt.</p>
+
+<div class="diagram">
+<pre class="mermaid">
+flowchart TD
+    Start[Cycle N starts every 90s per market] --> Load[Load state.json cycle count forecast notes trades]
+    Load --> Market[Fetch live market data via Jupiter API]
+    Market --> Position[Check our open position via getPositions]
+    Position --> Build[Build system prompt with fixed criteria live state cumulative notes prior forecasts trades and active Skills]
+    Build --> Sonnet[Call Claude Sonnet with research tools]
+    Sonnet --> Tools[search_web read_url get_x_posts get_market_details]
+    Tools --> Parse[Parse JSON output forecast action newNotes rationale]
+    Parse --> Action{action}
+    Action -->|trade| Kelly[Kelly sizing capped at 5 USD min Jupiter 5 USD]
+    Kelly --> Order[Build order via Jupiter and sign and send via wallet]
+    Action -->|exit| Close[Close position via Jupiter returns winnings or stop-loss]
+    Action -->|hold| Save[Save updated state.json]
+    Order --> TGPing[Telegram ping Mathis]
+    Close --> TGPing
+    TGPing --> Save
+    Save --> End[Cycle N ends sleep 90s]
+</pre>
+</div>
+
+<div class="card">
+<div class="card-title">Why this matters — cumulative context</div>
+<p>
+Each cycle, the expert receives <strong>everything it ever learned about this market</strong> as part of its system prompt. By cycle 10, it has 20+ notes from prior cycles, knows what it bet and when, and can detect what changed rather than redoing cold research every time. <em>This is impossible with a discovery-mode orchestrator</em> which forgets its prior research at every market switch.
+</p>
+</div>
+
+<!-- 3. PER EXPERT -->
+<h2 id="per-expert">3 · One expert's brain — files on disk</h2>
+
+<p>Every expert lives in a directory <code>./agents/&lt;marketId&gt;/</code>. State persists across cycles, restarts, and crashes.</p>
+
+<div class="diagram">
+<pre class="mermaid">
+flowchart LR
+    subgraph DIR [./agents/POLY-1280315/]
+      AM[AGENT.md autogenerated card]
+      ST[state.json canonical state]
+    end
+    LR1[experts.ts loop next cycle]
+    LR2[src/summary.ts end of run recap]
+    LR3[judges during demo]
+    ST --> LR1
+    LR1 --> ST
+    ST --> LR2
+    AM --> LR3
+</pre>
+</div>
+
+<table>
+<thead><tr><th>File</th><th>Purpose</th><th>Updated when</th></tr></thead>
+<tbody>
+<tr><td><code>AGENT.md</code></td><td>Human-readable expert card. YAML frontmatter plus summary of state.</td><td>End of every cycle</td></tr>
+<tr><td><code>state.json</code></td><td>Canonical, machine-readable state. Loaded at the top of every cycle.</td><td>End of every cycle</td></tr>
+</tbody>
+</table>
+
+<h3>state.json shape</h3>
+<pre>{
+  "marketId": "POLY-1280315",
+  "question": "Google Gemini score on FrontierMath &gt;= 60% by Jun 30?",
+  "rulesPrimary": "...resolves per Epoch AI leaderboard...",
+  "createdAt": 1779004538299,
+  "cycleCount": 7,
+  "lastForecast": {
+    "probabilityYes": 0.28,
+    "confidence": 0.70,
+    "side": "NO",
+    "reasoning": "Best Gemini official score is 38%. Even GPT-5.5 Pro only at 52.4%. 60% gap unlikely in 6 weeks."
+  },
+  "contextNotes": [
+    "[cycle 1] Best official Gemini FrontierMath Tiers 1-3: ~38%...",
+    "[cycle 1] CRITICAL May 2026: Epoch AI flagged ~1/3 of FrontierMath problems have fatal errors...",
+    "[cycle 1] Market implies ~55% YES but evidence strongly favors NO (~72%)..."
+  ],
+  "trades": [
+    { "txSig": "2h9cVuq...", "side": "NO", "betUsd": 5, "at": 1778997202, "entryPrice": 0.85 }
+  ],
+  "exits": []
+}</pre>
+
+<!-- 4. SELF IMPROVEMENT -->
+<h2 id="skills">4 · Self-improvement — agent writes its own Skills</h2>
+
+<p>The agent grows new capabilities by writing <strong>Skills</strong> following Anthropic's filesystem-based capability modules pattern. Every 5 cycles, the orchestrator reads its own trail, asks itself <em>what skill would have helped me on my last trades</em>, drafts a SKILL.md, runs it through a safety acceptor (Haiku), then promotes it to <code>/skills/active/</code> where every subsequent specialist call picks it up.</p>
+
+<div class="diagram">
+<pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant L as Orchestrator
+    participant R as Reflect Sonnet
+    participant FS as Filesystem
+    participant A as Acceptor Haiku
+    participant S as Specialist Sonnet
+
+    L->>L: cycleCount mod 5 equals 0
+    L->>R: read trail and propose a skill
+    R->>FS: read trail.jsonl last 50 entries
+    R-->>L: slug name description body
+    L->>FS: write skills/proposals/slug/SKILL.md
+    L->>A: review proposal vs 5pt checklist
+    A-->>L: accept or reject
+    L->>FS: promote to skills/active/slug/SKILL.md
+    Note right of FS: Next cycle specialist loads all skills/active into its system prompt
+    L->>S: research market X with new skill loaded
+    S-->>L: better calibrated SpecialistOpinion
+</pre>
+</div>
+
+<div class="card">
+<div class="card-title">Skills written by the agent during the run</div>
+<table>
+<thead><tr><th>Written at</th><th>Skill name</th><th>What it does</th></tr></thead>
+<tbody>
+<tr>
+  <td>cycle 5 (~13:54)</td>
+  <td><code>ai-benchmark-resolution-sourcing</code></td>
+  <td>Identifies the official resolution leaderboard for AI benchmark markets before estimating probability. Warns about third-party tracker discrepancies (Scale vs llm-stats vs Artificial Analysis).</td>
+</tr>
+<tr>
+  <td>cycle 10 (~14:30)</td>
+  <td><code>multi-bracket-consistency</code></td>
+  <td>For markets that are different brackets of the same underlying event (Starship launch counts, Tesla deliveries, FrontierMath thresholds): build ONE probability distribution across all brackets and price each bracket from it, instead of re-researching each independently.</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<h3>Safety — what Skills can and cannot do</h3>
+
+<div class="grid-2">
+<div class="card">
+<div class="card-title"><span class="pill">YES</span> Skills CAN</div>
+<ul>
+<li>Add new instructions to specialist system prompts (research workflows, source priorities)</li>
+<li>Add domain expertise (e.g. always check Epoch AI for FrontierMath)</li>
+<li>Add new market type recognizers (e.g. multi-bracket detection)</li>
+<li>Be removed or refined by future reflects</li>
+</ul>
+</div>
+<div class="card">
+<div class="card-title"><span class="pill danger">NO</span> Skills CANNOT</div>
+<ul>
+<li>Modify MAX_BET_USD, TOTAL_BANKROLL_USD, drawdown stop, or wallet permissions</li>
+<li>Edit lib/wallet.ts, lib/jupiter.ts, lib/kelly.ts (trade execution layer)</li>
+<li>Delete or override existing active Skills (only add)</li>
+<li>Bypass the acceptor checklist (5-point safety review)</li>
+</ul>
+</div>
+</div>
+
+<!-- 5. DATA FLOW -->
+<h2 id="data-flow">5 · Data flow — sources to trades</h2>
+
+<div class="diagram">
+<pre class="mermaid">
+flowchart LR
+    subgraph SOURCES [External sources]
+      WEB[Tavily search news articles]
+      URL[read_url any HTML page]
+      X[X Twitter via twitterapi.io]
+      JM[Jupiter market data prices volume]
+    end
+    subgraph CLAUDE [Claude call]
+      EXP[Expert agent Sonnet]
+    end
+    subgraph CHAIN [On chain]
+      SOL[Solana wallet BIP39 derived]
+      HEL[Helius RPC]
+      JX[Jupiter Predict order and positions API]
+    end
+    WEB --> EXP
+    URL --> EXP
+    X --> EXP
+    JM --> EXP
+    EXP --> JX
+    JX --> SOL
+    SOL --> HEL
+    HEL --> EXP
+    JX --> EXP
+</pre>
+</div>
+
+<h3>One trade end-to-end (real example from the run)</h3>
+<pre>1. Expert opens cycle 5 on POLY-1280316 FrontierMath 45% Gemini
+2. Loads state: 4 prior notes about Gemini scores
+3. Calls Sonnet: What changed? Is market still mispriced?
+4. Sonnet calls Tavily 3x, reads 5 URLs, forms forecast
+   returns probabilityYes 0.38, confidence 0.72, side NO,
+   reasoning: Best Gemini official is 38%, threshold is 45%, gap 7pp
+5. Kelly sizing: edge 54% vs market YES 0.92, confidence 0.72
+   bet 5 USD (Kelly says 3, rounded up to Jupiter min 5)
+6. Jupiter buildOrder returns unsigned tx
+7. Wallet signs and sends via Helius RPC
+8. Solscan confirms: 4ZrEuArm...</pre>
+
+<!-- 6. SPARK FORK -->
+<h2 id="spark-fork">6 · Spark fork — same engine, different output</h2>
+
+<p>The Startup Desk is the same research engine, pointed at a different output: a <strong>capital allocation recommendation</strong> for a startup decision, instead of a trade. This is the bridge to where the engine wants to go next — decision markets on idea coins.</p>
+
+<div class="diagram">
+<pre class="mermaid">
+flowchart LR
+    subgraph ENGINE [Shared engine]
+      RT[research tools Tavily read_url X]
+      CL[Claude Sonnet]
+    end
+    subgraph TD [Trading desk today for proof]
+      PM[Polymarket via Jupiter Predict]
+      OUT1[a 5 USD trade on a public PM]
+    end
+    subgraph SD [Startup desk forkable for Spark]
+      DEC[capital decisions like hire vs not 10k channel A vs B]
+      OUT2[reasoned reco plus optional linked PM trade skin in the game]
+    end
+    PM --> ENGINE
+    DEC --> ENGINE
+    ENGINE --> OUT1
+    ENGINE --> OUT2
+    OUT2 --> SPARK[Spark decision markets idea coins DAO treasuries]
+</pre>
+</div>
+
+<div class="card">
+<div class="card-title">Live test (today, ~14:10 SGT)</div>
+<p>Asked the Startup Desk: <em>10k USD treasury, Solana developer SaaS, 2 people, 30hr per month creator. TikTok organic push, or paid X ads, or split?</em></p>
+<p>Got back in 90 seconds, for ~$0.10 of Anthropic spend:</p>
+<p class="quote">
+Allocate the 10000 USD to paid X ads. Solana's official presence lists 3M+ X followers as its dominant community channel. TikTok skews consumer/retail 18 to 34, not technical developer B2B. A part-time creator with 30 hrs per month and zero TikTok history cannot build sufficient content velocity for attributable pipeline within the 90-day window. X also just lifted its crypto ad ban with new Paid Partnership disclosure rules.
+</p>
+<p>7 sources cited (Solana community page, X crypto ad lift coverage, $5 CPM benchmark, $1.4B Web3 ad-waste tweet). Confidence 0.72. <em>Full output in <code>docs/startup-desk-demo.md</code>.</em></p>
+</div>
+
+<!-- 7. RUNTIME -->
+<h2 id="runtime">7 · Runtime stats (live)</h2>
+
+<p>This page is static — for live numbers run <code>bun run src/summary.ts</code> from the repo root. As of late afternoon SGT:</p>
+
+<table>
+<thead><tr><th>Metric</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td>Trades placed (orchestrator)</td><td>9 on Solana mainnet</td></tr>
+<tr><td>Stop-losses executed on-chain</td><td>1 (tx <code>5pdSUAP...</code>)</td></tr>
+<tr><td>Skills self-written by the agent</td><td>2 (<code>ai-benchmark-resolution-sourcing</code>, <code>multi-bracket-consistency</code>)</td></tr>
+<tr><td>Dedicated experts running (post-pivot)</td><td>3 (FrontierMath 60%, FrontierMath 50%, Gemini 3.2 May 19)</td></tr>
+<tr><td>Wallet</td><td><code>xZSjnVoiCDBC6Q5d6NfDi3ufKwoauWJW1j5WQ5Y3tgY</code></td></tr>
+<tr><td>Bankroll</td><td>50 USDC · 5 USD cap per trade · 40% drawdown stop</td></tr>
+<tr><td>Hands-off window</td><td>13:00 to 16:00 SGT 2026-05-17</td></tr>
+</tbody>
+</table>
+
+<div class="footer">
+Conviction is built for Ralphthon @ Singapore 2026 · MIT license · Open-source: <a href="https://github.com/MathisSpark/conviction">github.com/MathisSpark/conviction</a>
+</div>
+</div>
+
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      darkMode: true,
+      background: '#1c2129',
+      primaryColor: '#1c2129',
+      primaryTextColor: '#e8eaed',
+      primaryBorderColor: '#2a2f37',
+      lineColor: '#5f6368',
+      secondaryColor: '#0a0c10',
+      tertiaryColor: '#14181f',
+      fontSize: '14px',
+      fontFamily: '-apple-system, "Inter", system-ui, sans-serif',
+    },
+    flowchart: { curve: 'basis', padding: 16, nodeSpacing: 36, rankSpacing: 50 },
+    sequence: { actorFontSize: 14, messageFontSize: 13 },
+  });
+</script>
+</body>
+</html>

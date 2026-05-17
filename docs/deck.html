@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Conviction</title>
+<style>
+  :root {
+    --bg: #0b0d12;
+    --bg-2: #14181f;
+    --fg: #f5f7fa;
+    --fg-dim: #a8b0bd;
+    --accent: #4ade80;
+    --accent-dim: #166534;
+    --warn: #fbbf24;
+    --border: #2a2f37;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); }
+  body {
+    scroll-snap-type: y mandatory;
+    overflow-y: scroll;
+    height: 100vh;
+  }
+  .slide {
+    min-height: 100vh;
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 80px 8vw;
+    position: relative;
+    border-bottom: 1px solid var(--border);
+  }
+  .slide-num {
+    position: absolute;
+    top: 30px;
+    left: 8vw;
+    color: var(--fg-dim);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    letter-spacing: 2px;
+  }
+  .brand {
+    position: absolute;
+    top: 30px;
+    right: 8vw;
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+  }
+  .scroll-hint {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--fg-dim);
+    font-size: 12px;
+    letter-spacing: 1px;
+    animation: bounce 2s ease-in-out infinite;
+  }
+  @keyframes bounce {
+    0%, 100% { transform: translate(-50%, 0); }
+    50% { transform: translate(-50%, -6px); }
+  }
+  h1 {
+    font-size: clamp(40px, 6vw, 84px);
+    line-height: 1.05;
+    letter-spacing: -2px;
+    font-weight: 700;
+    margin-bottom: 30px;
+  }
+  h1 .accent { color: var(--accent); }
+  h1 .strike { color: var(--fg-dim); text-decoration: line-through; text-decoration-thickness: 4px; }
+  .lead {
+    font-size: clamp(18px, 1.8vw, 24px);
+    color: var(--fg-dim);
+    line-height: 1.55;
+    max-width: 820px;
+    margin-bottom: 40px;
+  }
+  .lead strong { color: var(--fg); font-weight: 600; }
+  .lead .accent { color: var(--accent); font-weight: 600; }
+  .footnote {
+    font-size: 13px;
+    color: var(--fg-dim);
+    margin-top: 60px;
+    font-family: var(--font-mono);
+  }
+
+  /* Slide 1 — bar chart */
+  .chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    height: 200px;
+    margin: 40px 0 20px;
+    max-width: 720px;
+  }
+  .bar {
+    flex: 1;
+    background: var(--accent);
+    border-radius: 4px 4px 0 0;
+    position: relative;
+  }
+  .bar.dim { background: var(--border); }
+  .bar.dim::after { content: "."; color: transparent; }
+  .chart-axis {
+    display: flex;
+    gap: 6px;
+    max-width: 720px;
+    color: var(--fg-dim);
+    font-size: 12px;
+    font-family: var(--font-mono);
+  }
+  .chart-axis span { flex: 1; text-align: center; }
+  .chart-label {
+    color: var(--fg-dim);
+    font-size: 14px;
+    margin-top: 14px;
+    font-family: var(--font-mono);
+  }
+
+  /* Slide 3 — diagram */
+  .arch {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 20px;
+    align-items: center;
+    max-width: 900px;
+    margin-top: 40px;
+  }
+  .arch-box {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+  }
+  .arch-box .title { font-size: 13px; color: var(--fg-dim); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
+  .arch-box .body { font-size: 22px; font-weight: 600; }
+  .arch-box .meta { font-size: 12px; color: var(--fg-dim); margin-top: 6px; font-family: var(--font-mono); }
+  .arch-arrow {
+    color: var(--accent);
+    font-size: 28px;
+  }
+  .multiply {
+    margin-top: 30px;
+    text-align: center;
+    color: var(--fg-dim);
+    font-family: var(--font-mono);
+    font-size: 13px;
+  }
+  .multiply strong { color: var(--accent); font-size: 18px; }
+  .stack {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 20px;
+    max-width: 900px;
+  }
+  .stack-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 20px;
+    align-items: center;
+    opacity: 0.6;
+    transform: scale(0.96);
+  }
+  .stack-row.fade-1 { opacity: 0.4; transform: scale(0.92); }
+  .stack-row.fade-2 { opacity: 0.25; transform: scale(0.88); }
+  .stack-row.fade-3 { opacity: 0.12; transform: scale(0.84); }
+
+  /* Slide 4 — proof */
+  .proof {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 18px;
+    margin-top: 36px;
+    max-width: 1100px;
+  }
+  .stat-card {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px 26px;
+  }
+  .stat-num {
+    font-size: clamp(32px, 4.5vw, 52px);
+    font-weight: 700;
+    letter-spacing: -1px;
+    color: var(--accent);
+  }
+  .stat-label {
+    font-size: 14px;
+    color: var(--fg-dim);
+    margin-top: 4px;
+  }
+  .stat-sub {
+    font-size: 12px;
+    color: var(--fg-dim);
+    margin-top: 8px;
+    font-family: var(--font-mono);
+    word-break: break-all;
+  }
+  .stat-sub a { color: var(--accent); text-decoration: none; }
+  .stat-sub a:hover { text-decoration: underline; }
+
+  /* Final */
+  .cta {
+    margin-top: 40px;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--fg-dim);
+  }
+  .cta a { color: var(--accent); text-decoration: none; }
+  .cta a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<!-- ───────────── SLIDE 1 — PROBLEM ───────────── -->
+<section class="slide">
+  <div class="slide-num">01 / 04 · PROBLEM</div>
+  <div class="brand">CONVICTION</div>
+  <h1>Markets price the truth.<br><span class="accent">Until they don't.</span></h1>
+  <p class="lead">
+    Prediction markets aggregate what people collectively think will happen — better than polls, better than experts. <strong>When they work, they work.</strong>
+    <br><br>
+    But for a market to work, you need <span class="accent">informed people betting real money</span>. On most small markets, nobody bets. So prices stay wrong. So no one trusts them. So markets die.
+  </p>
+  <div class="chart">
+    <div class="bar" style="height:90%"></div>
+    <div class="bar" style="height:62%"></div>
+    <div class="bar" style="height:38%"></div>
+    <div class="bar dim" style="height:18%"></div>
+    <div class="bar dim" style="height:11%"></div>
+    <div class="bar dim" style="height:7%"></div>
+    <div class="bar dim" style="height:5%"></div>
+    <div class="bar dim" style="height:4%"></div>
+    <div class="bar dim" style="height:3%"></div>
+    <div class="bar dim" style="height:3%"></div>
+    <div class="bar dim" style="height:2%"></div>
+    <div class="bar dim" style="height:2%"></div>
+    <div class="bar dim" style="height:1%"></div>
+    <div class="bar dim" style="height:1%"></div>
+    <div class="bar dim" style="height:1%"></div>
+  </div>
+  <div class="chart-label">3 markets get the money. The other 12 are dead. → most questions get no answer.</div>
+  <div class="scroll-hint">scroll ↓</div>
+</section>
+
+<!-- ───────────── SLIDE 2 — WHY IT MATTERS ───────────── -->
+<section class="slide">
+  <div class="slide-num">02 / 04 · WHY IT MATTERS</div>
+  <div class="brand">CONVICTION</div>
+  <h1>If small markets worked,<br><span class="accent">decisions would be cheaper.</span></h1>
+  <p class="lead">
+    Imagine asking <em>"will hiring CEO X grow revenue?"</em> as a prediction market. Today, no such market exists — because nobody would bother betting on it.
+    <br><br>
+    So instead, humans guess in <strong>boardrooms, Slack threads, gut calls</strong>. Decisions worth millions are made on opinions worth nothing.
+    <br><br>
+    The big markets (US elections, Bitcoin price) work because thousands of people bet. <span class="accent">The 99% of useful questions never get a market.</span> That's the gap.
+  </p>
+  <div class="footnote">
+    Adhi (@aelix0x): "The most expensive part of running any prediction market is attracting informed traders. If AI forecasters can synthesize available information and provide initial price discovery, the minimum viable threshold drops substantially."
+  </div>
+  <div class="scroll-hint">scroll ↓</div>
+</section>
+
+<!-- ───────────── SLIDE 3 — SOLUTION ───────────── -->
+<section class="slide">
+  <div class="slide-num">03 / 04 · SOLUTION</div>
+  <div class="brand">CONVICTION</div>
+  <h1>We put <span class="accent">AI experts</span><br>on small markets.</h1>
+  <p class="lead">
+    Each market gets <strong>one dedicated AI agent</strong>. It lives there. It reads everything online about that market. It places informed bets with <strong>its own real money wallet</strong>. It learns over time from its own trades.
+    <br><br>
+    Stack 1000 of these agents in parallel and <span class="accent">small markets start working</span> — because there's finally informed money in them.
+  </p>
+
+  <div class="arch">
+    <div class="arch-box">
+      <div class="title">A small market</div>
+      <div class="body">"Will Tesla deliver 400k cars in Q2?"</div>
+      <div class="meta">5 traders · $43k volume</div>
+    </div>
+    <div class="arch-arrow">→</div>
+    <div class="arch-box">
+      <div class="title">One AI expert</div>
+      <div class="body">+ its own wallet</div>
+      <div class="meta">Reads filings · X · supply chain · news</div>
+    </div>
+  </div>
+
+  <div class="stack">
+    <div class="stack-row">
+      <div class="arch-box" style="padding:14px">
+        <div class="body" style="font-size:16px">"Will Gemini ship by July?"</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box" style="padding:14px">
+        <div class="body" style="font-size:16px">expert + wallet</div>
+      </div>
+    </div>
+    <div class="stack-row fade-1">
+      <div class="arch-box" style="padding:14px">
+        <div class="body" style="font-size:16px">"Will Starship launch May 22?"</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box" style="padding:14px">
+        <div class="body" style="font-size:16px">expert + wallet</div>
+      </div>
+    </div>
+    <div class="stack-row fade-2">
+      <div class="arch-box" style="padding:14px">
+        <div class="body" style="font-size:16px">"…"</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box" style="padding:14px">
+        <div class="body" style="font-size:16px">expert + wallet</div>
+      </div>
+    </div>
+    <div class="stack-row fade-3">
+      <div class="arch-box" style="padding:14px"></div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box" style="padding:14px"></div>
+    </div>
+  </div>
+
+  <div class="multiply"><strong>× 1000+</strong> &nbsp;·&nbsp; one dedicated AI per market &nbsp;·&nbsp; running 24/7</div>
+  <div class="scroll-hint">scroll ↓</div>
+</section>
+
+<!-- ───────────── SLIDE 4 — PROOF ───────────── -->
+<section class="slide">
+  <div class="slide-num">04 / 04 · PROOF</div>
+  <div class="brand">CONVICTION</div>
+  <h1>Tested today.<br><span class="accent">Real money. Real trades. Solana mainnet.</span></h1>
+  <p class="lead">
+    3 expert agents. 3 assigned markets on <strong>Jupiter Predict</strong>. Each agent has its own wallet, places its own bets, and we know it works <span class="accent">when the wallet grows</span>. That's the KPI. Simple.
+  </p>
+
+  <div class="proof">
+    <div class="stat-card">
+      <div class="stat-num">9</div>
+      <div class="stat-label">Real trades placed on mainnet</div>
+      <div class="stat-sub">Edges found: 9% to 54%</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">$50</div>
+      <div class="stat-label">Disposable bankroll</div>
+      <div class="stat-sub">$5/trade cap · 40% drawdown stop</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">2</div>
+      <div class="stat-label">Skills the agent wrote itself</div>
+      <div class="stat-sub">Improved its own research mid-run</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">1</div>
+      <div class="stat-label">Auto stop-loss on chain</div>
+      <div class="stat-sub"><a href="https://solscan.io/tx/5pdSUAP7TX4LBN2oBJ124XtSwuKdUN4ugyvefgJrz4TeyYiso2Ct2oPKBb7RBfcrnnXXrCpznsykoXWFuyGEbg1K" target="_blank">tx 5pdSUAP…</a></div>
+    </div>
+  </div>
+
+  <div class="cta">
+    Built at Ralphthon @ Singapore — 2026-05-17 ·
+    <a href="https://github.com/MathisSpark/conviction" target="_blank">github.com/MathisSpark/conviction</a> ·
+    full architecture: <a href="architecture.html">architecture.html</a>
+  </div>
+</section>
+
+</body>
+</html>
