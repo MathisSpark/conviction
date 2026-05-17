@@ -95,9 +95,10 @@ Filter: **informed-aggregation markets** (not TA/latency-arb). Per `research/mar
 
 ### 5.3 Bankroll rules
 - Total bankroll: $50 USDC on wallet `xZSjnVoiCDBC6Q5d6NfDi3ufKwoauWJW1j5WQ5Y3tgY`.
-- Max position per market: **$0.50** (locked for v0 — bump later only after Mathis explicitly says so).
-- Hard stop: pause all trading if account drawdown > 40% ($20 lost).
-- Expected total exposure across 5 trades: $2.50 — leaves $47.50 safety margin.
+- Max position per market: **$5** (Jupiter Predict floor — discovered 2026-05-17, can't go lower).
+- Hard stop: pause all trading if account drawdown > 40% ($20 lost) → auto-pause after ~4 consecutive full losses.
+- Expected total exposure across 5 trades: $25 (50% of bankroll).
+- Worst-case ($25 total loss): $25 remaining. Reasonable.
 
 ---
 
