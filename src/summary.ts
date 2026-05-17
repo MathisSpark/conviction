@@ -16,6 +16,8 @@ import { loadActiveSkills } from "./lib/skills.ts";
 
 const TRAIL = process.env.TRAIL_FILE ?? "./trail.jsonl";
 const MONITOR = process.env.MONITOR_LOG ?? "./monitor.jsonl";
+const EXPERT_TRAIL = process.env.EXPERT_TRAIL ?? "./expert-trail.jsonl";
+const AGENTS_ROOT = "./agents";
 
 function readJsonl(path: string): any[] {
   if (!existsSync(path)) return [];
@@ -26,6 +28,7 @@ function readJsonl(path: string): any[] {
 
 const trail = readJsonl(TRAIL);
 const monitor = readJsonl(MONITOR);
+const expertTrail = readJsonl(EXPERT_TRAIL);
 
 // --- cycles + reflects
 const cycles = trail.filter(t => t.type === "cycle_start").length;
@@ -129,3 +132,49 @@ ${acceptedSkills.length === 0
 
 ═══════════════════════════════════════════════════════════════
 `);
+
+// --- EXPERT MODE summary ---
+const expertCycleStarts = expertTrail.filter(e => e.type === "expert_cycle_start");
+const expertCycleEnds = expertTrail.filter(e => e.type === "expert_cycle_end");
+const expertTrades = expertTrail.filter(e => e.type === "expert_trade_executed");
+const expertExits = expertTrail.filter(e => e.type === "expert_exit_executed");
+const expertErrors = expertTrail.filter(e => /_error$/.test(e.type));
+
+const expertDirs = existsSync(AGENTS_ROOT)
+  ? readdirSync(AGENTS_ROOT).filter(n => !n.startsWith(".") && statSync(join(AGENTS_ROOT, n)).isDirectory())
+  : [];
+
+console.log(`
+╔══════════════════════════════════════════════════════════════╗
+║            EXPERT MODE — assigned-market agents             ║
+╚══════════════════════════════════════════════════════════════╝
+
+Agents running:  ${expertDirs.length}
+Cycle starts:    ${expertCycleStarts.length}
+Cycle ends:      ${expertCycleEnds.length}
+Expert trades:   ${expertTrades.length}
+Expert exits:    ${expertExits.length}
+Expert errors:   ${expertErrors.length}
+
+`);
+
+for (const marketId of expertDirs) {
+  const statePath = join(AGENTS_ROOT, marketId, "state.json");
+  if (!existsSync(statePath)) continue;
+  let s: any;
+  try { s = JSON.parse(readFileSync(statePath, "utf-8")); } catch { continue; }
+  console.log(`──── ${marketId} ────`);
+  console.log(`  question:      ${s.question}`);
+  console.log(`  cycles:        ${s.cycleCount}`);
+  console.log(`  notes:         ${s.contextNotes?.length ?? 0}`);
+  console.log(`  trades:        ${s.trades?.length ?? 0}`);
+  console.log(`  exits:         ${s.exits?.length ?? 0}`);
+  if (s.lastForecast) {
+    console.log(`  last forecast: pYES=${s.lastForecast.probabilityYes} conf=${s.lastForecast.confidence} side=${s.lastForecast.side}`);
+    console.log(`     reasoning: ${s.lastForecast.reasoning?.slice(0, 200)}`);
+  }
+  if (s.contextNotes?.length) {
+    console.log(`  latest note:   ${s.contextNotes[s.contextNotes.length - 1].slice(0, 200)}`);
+  }
+  console.log("");
+}
