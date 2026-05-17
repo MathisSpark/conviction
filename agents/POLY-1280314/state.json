@@ -3,12 +3,12 @@
   "question": "50%+",
   "rulesPrimary": "This market will resolve to \"Yes\" if any Google Gemini model achieves the listed score or greater on the FrontierMath Exam by June 30, 2026, 11:59 PM ET. Otherwise, the market will resolve to \"No\".\n\nThis market will resolve according to the Epoch AI’s Frontier Math benchmarking leaderboard (https://epoch.ai/frontiermath) for Tier 1-3. Studies which are not included in the leaderboard (e.g. https://x.com/EpochAIResearch/status/1945905796904005720) will not be considered.\n\nThe primary resolution source will be information from EpochAI; however, a consensus of credible reporting may also be used. ",
   "createdAt": 1779004662572,
-  "cycleCount": 5,
+  "cycleCount": 6,
   "lastForecast": {
     "probabilityYes": 0.05,
     "confidence": 0.85,
     "side": "NO",
-    "reasoning": "Starting from the base rate of 0.28, evidence updates strongly downward: Gemini 3 Pro's best official score is 38% (12pp below threshold), Gemini 3.1 Pro showed no improvement, and the May 11 Epoch AI benchmark freeze blocks new evaluations with no timeline for resumption before the June 30 deadline. The structural barrier of the freeze alone makes a YES resolution near-impossible. Four resolution ambiguities apply a modest ~0.05 confidence penalty. The existing NO position at avg $0.68 has mark at $0.31, well above the ~$0.05 forecast — market has not converged within 3 cents of our probability, so we hold rather than exit. No new trade is warranted since a position is already open."
+    "reasoning": "Starting from the base rate of 0.28, evidence updates heavily downward: Gemini 3.1 Pro (~38%) showed no improvement over Gemini 3 Pro, Gemini 3 Deep Think remains unevaluated due to API access issues, and the Epoch AI benchmark freeze since May 11 makes any new official evaluation before June 30 extremely unlikely. The ~12pp gap from 38% to 50% is not bridgeable via retroactive score corrections from the problem review. Five resolution ambiguities apply a modest penalty but do not meaningfully shift the core assessment. An open NO position exists at avg $0.68 vs current mark $0.31 — the market has not converged to within 3 cents of our ~0.05 forecast (which would require mark ~$0.02), so we hold rather than exit, capturing the remaining premium as the position decays toward resolution."
   },
   "contextNotes": [
     "[cycle 2] Best Gemini score is 38% as of mid-2026 — 12pp gap with ~1 month to deadline, and Gemini 3.1 Pro showed no improvement over 3 Pro.",
@@ -18,9 +18,11 @@
     "[cycle 4] Epoch AI benchmark freeze (May 11 announcement) makes pre-deadline Gemini evaluation nearly impossible — strongest new evidence for NO",
     "[cycle 4] GPT-5.4 leads at 47.6% but still below 50%; Gemini absent from leaderboard entirely as of May 17, 2026",
     "[cycle 5] Epoch AI benchmark freeze (May 11, 2026) with no resumption timeline is the dominant near-term blocker for any new Gemini evaluation before June 30 deadline.",
-    "[cycle 5] Mark price $0.31 remains far above our ~$0.05 forecast; hold NO position — exit only if mark converges below ~$0.08 or forecast reverses."
+    "[cycle 5] Mark price $0.31 remains far above our ~$0.05 forecast; hold NO position — exit only if mark converges below ~$0.08 or forecast reverses.",
+    "[cycle 6] Epoch AI freeze (May 11, 2026) remains active with no timeline for corrected dataset release — structural barrier to YES resolution persists through June 30 deadline",
+    "[cycle 6] Gemini 3 Deep Think still unevaluated officially; even if evaluated, would need to jump ~12pp from Gemini 3 Pro's ~38% — no evidence of such capability gain"
   ],
   "trades": [],
   "exits": [],
-  "lastUpdatedAt": 1779007552304
+  "lastUpdatedAt": 1779008537754
 }

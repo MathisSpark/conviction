@@ -1,8 +1,8 @@
-# Conviction — PRD v0.1
+# Conviction — PRD v0.2
 
-> Locked on 2026-05-17 at Ralphthon @ Singapore. Original pre-build product spec — captures the initial intent and goal framing.
+> Locked on 2026-05-17 at Ralphthon @ Singapore. Updated end-of-run to reflect the final shipped architecture (multi-agent + assigned-expert mode).
 
-> ⚠️ **This document predates the architectural pivot to multi-agent + assigned-expert mode.** For the final architecture (1 dedicated expert per assigned market, each spawning 4 parallel sub-specialists), see [`architecture.html`](architecture.html) and [`deck.html`](deck.html). The numbered goals (G1-G3) below still hold — they were achieved.
+> 📊 Visual companions: [`architecture.html`](architecture.html) (full mermaid diagrams) · [`deck.html`](deck.html) (4-slide pitch).
 
 ---
 
@@ -31,38 +31,45 @@ Academic anchor: [Adhi (@aelix0x) on AI forecasters as automated MMs](https://x.
 
 ---
 
-## 3. Architecture
+## 3. Architecture (final, shipped)
+
+**Markets are assigned, not discovered.** A human (the "Spark") tells Conviction which market matters; for each, we spawn ONE dedicated expert. The expert is itself an orchestrator that, every cycle, dispatches **4 sub-specialists in parallel** and aggregates their structured outputs into a final decision.
 
 ```
-                  ┌───────────────────────────────────────────┐
-                  │  ORCHESTRATOR (Claude Opus 4.7)           │
-                  │  - Owns Solana wallet (seed-derived)      │
-                  │  - Runs 2 loops in parallel:              │
-                  │    A. Discovery+Trade   B. Position Monitor│
-                  │  - Reads /skills/active/ each cycle       │
-                  │  - Writes /skills/proposals/ each cycle   │
-                  └──┬────────────────────────────────────┬───┘
-                     │                                    │
-        ┌────────────▼──────────┐         ┌───────────────▼────────┐
-        │  PUBLIC MARKETS DESK  │         │  STARTUP DESK          │
-        │  - Kelly-sized entry  │         │  - Capital allocation  │
-        │  - Convergence exit   │         │    advisory (Spark-fork│
-        │  - Stop loss          │         │    preview)            │
-        │  - Jupiter Predict    │         │  - Optional linked PM  │
-        │    (real money $50)   │         │    trade               │
-        └──────────┬────────────┘         └────────────┬───────────┘
-                   │                                   │
-                   └───────────────┬───────────────────┘
-                                   ▼
-              ┌────────────────────────────────────────┐
-              │  RESEARCH SUBAGENTS (Claude Sonnet 4.6)│
-              │  - Tech / company-outcome              │
-              │  - (skills add more dynamically)       │
-              │                                        │
-              │  Tools: Tavily search · X scrape ·     │
-              │         read_url · get_market_details  │
-              └────────────────────────────────────────┘
+HUMAN: assigns marketId(s) via ASSIGNED_MARKETS env var
+   │
+   ▼
+src/experts.ts loops every 90s, for each assigned market:
+   │
+   ▼
+EXPERT (one per market — see /agents/<marketId>/AGENT.md + state.json)
+   │
+   ▼  (each cycle dispatches in parallel)
+   │
+   ├──► sub-agent 1: resolution-analyst   (Haiku)       → criteria + ambiguities
+   ├──► sub-agent 2: evidence-gatherer    (Sonnet+tools)→ web/X/URL signals
+   ├──► sub-agent 3: base-rate-historian  (Sonnet)      → comparable past cases
+   └──► sub-agent 4: pricing-math         (Sonnet)      → aggregates 1+2+3
+                                                            ↓
+                                          FinalDecision {forecast, action}
+                                                            ↓
+                                  ┌─────────────┼─────────────┐
+                                  ▼             ▼             ▼
+                                trade          exit           hold
+                                  │             │             │
+                                  ▼             ▼             ▼
+                              Jupiter Predict (Solana mainnet)
+                                  │
+                              shared BIP39 wallet ($50, $5/trade cap)
+                                  │
+                              save state.json + log multi_agent_trace
 ```
+
+**Beyond the 4 hardcoded sub-specialists**, the expert can also **spawn new specialists on the fly** via the Anthropic Skills pattern. Every 5 cycles, a reflect step proposes a new `SKILL.md` (a focused sub-agent's instructions); a Haiku acceptor reviews it against a 5-point checklist; if accepted, it lands in `/skills/active/` and is loaded into next cycle's sub-agent prompts.
+
+**Parallel to the experts**, two desks consume the same engine:
+- **Public Markets Desk** (the experts above) — places real trades on Jupiter Predict.
+- **Startup Desk** ([src/desks/startup.ts](../src/desks/startup.ts)) — same research engine pointed at a capital-allocation question instead of a trade. Returns a recommendation with cited sources. Forkable to Spark idea coins / DAO treasury decisions.
 
 ---
 
@@ -87,10 +94,9 @@ Filter: **informed-aggregation markets** (not TA/latency-arb). Per `research/mar
 ## 5. Trading dynamics
 
 ### 5.1 Entry rule
-- Specialist returns `{ probabilityYes, confidence }`.
-- Compute edge = max(p − yesPrice, (1−p) − noPrice).
-- If `edge ≥ CONVICTION_THRESHOLD` (0.08) AND `confidence ≥ 0.4`, enter.
-- Size = 1/4 Kelly × confidence, capped at `MAX_BET_USD` = **$0.50 (locked, no auto-bump)**.
+- The pricing-math sub-agent returns `{ probabilityYes, confidence, side, edgePct, action }`.
+- If `action == "trade"` AND no open position on this market AND `edge ≥ CONVICTION_THRESHOLD` (0.08) AND `confidence ≥ 0.4`, enter.
+- Size = 1/4 Kelly × confidence, **capped at MAX_BET_USD = $5** and floored at Jupiter's $5 minimum (so practically every trade is exactly $5).
 
 ### 5.2 Exit rule (critical: don't wait for resolution)
 - **Take profit**: market price converges to within `EXIT_BUFFER_PCT` (0.02) of our forecast → close position.
@@ -134,9 +140,9 @@ Each `SKILL.md` has YAML frontmatter `{ name, description }` + a body of instruc
 5. **Reload**: next cycle starts by reading `/skills/active/` again.
 
 ### 6.3 What Skills CAN do
-- **Add prompt content** to orchestrator or specialists (heuristics, source priorities, market type expertise).
-- **Spawn new specialists**: a Skill can declare a new specialist (e.g. `gemini-release-watcher`) with its own system prompt + tool list. Orchestrator loads it at next cycle.
-- **Add discovery queries**: extend `DEMO_QUERIES` to cover a new market category.
+- **Add prompt content** to existing sub-specialists (heuristics, source priorities, market type expertise). Loaded into next cycle's sub-agent prompts.
+- **Spawn new sub-specialists** when the team needs a domain it doesn't cover (e.g. a Gemini-release-watcher beyond the 4 hardcoded sub-agents).
+- **Demonstrated**: 2 skills self-written during this run — `ai-benchmark-resolution-sourcing` (cycle 5) and `multi-bracket-consistency` (cycle 10).
 
 ### 6.4 What Skills CANNOT do (safety)
 - Cannot modify `MAX_BET_USD`, `TOTAL_BANKROLL_USD`, drawdown stop, or any wallet permission.
@@ -148,25 +154,25 @@ Each `SKILL.md` has YAML frontmatter `{ name, description }` + a body of instruc
 
 ## 7. Demo flow
 
-### 7.1 13:00 SGT — Hands off
+### 7.1 13:00 SGT — Hands off begins
 - Submit team + product intro card.
-- Orchestrator starts. Dashboard exposed publicly (Vercel or ngrok tunnel).
+- experts.ts launches (originally with single-specialist; later refactored to multi-agent mid-window).
 
-### 7.2 13:00–16:00 — Run autonomous
-- Bot trades on its own.
-- Bot self-improves via Skills loop.
-- Dashboard shows: live PnL, open positions, reasoning trace stream, Skills added/improved.
+### 7.2 13:00–18:30 — Run autonomous (window extended past 16:00 for multi-agent dev)
+- 3 experts each cycle through assigned markets, dispatching 4 sub-specialists in parallel.
+- Self-improves via Skills loop (2 skills self-written: `ai-benchmark-resolution-sourcing` cycle 5, `multi-bracket-consistency` cycle 10).
+- On-chain trades + autonomous exits as forecasts evolve.
 
-### 7.3 16:00–17:00 — Demo prep (lobster windows)
-- Pick the best 1–2 trade narratives from the trail.
-- Pick the best 1–2 Skills the agent added.
-- Rehearse 5 min pitch.
+### 7.3 18:30–19:00 — Demo prep
+- Pick best trade narratives from the trail (the multi-agent exit on POLY-2268715 is the killer story).
+- Pull skill the agent wrote autonomously.
+- Open dashboard + state.json files in terminal as demo props.
 
 ### 7.4 19:00 — Finals (if top 5)
-1. (30s) **Hook**: MVL critique — most PMs/DMs lack informed traders. Cite Adhi.
-2. (60s) **What**: Conviction = AI market maker that synthesizes info, takes informed positions, exits on convergence — built on Claude Agent SDK + Skills.
-3. (90s) **Demo**: open dashboard, show 1 real trade with reasoning trace, show 1 Skill the agent wrote during the 3h.
-4. (60s) **Bigger picture**: the same engine plugs into any decision market where capital allocation needs informed prices (idea coins, DAOs, governance). Forkable.
+1. (30s) **Hook**: MVL critique — small markets fail because no informed traders. Cite Hanson + Adhi.
+2. (60s) **What**: Conviction = AI market maker with dedicated experts per market, each deploying 4 parallel sub-specialists. Built on Claude Agent SDK + Anthropic Skills.
+3. (90s) **Demo**: walk through [`deck.html`](deck.html) + show one expert's state.json (cumulative notes growing over cycles) + show a Skill the agent wrote autonomously + cite one autonomous on-chain exit.
+4. (60s) **Bigger picture**: same engine plugs into any decision market where capital allocation needs informed prices (Spark idea coins, DAO treasuries). Forkable — see [`startup-desk-demo.md`](startup-desk-demo.md).
 5. (30s) **Ask**: come find us, we're shipping past Sunday.
 
 ---
@@ -185,11 +191,11 @@ The same engine, retargeted:
 
 ## 9. Out of scope (today)
 
-- Swig wallet (using seed-derived hot wallet — disposable, $50).
-- Multi-specialist routing (single tech/company specialist; Skills will add more if useful).
-- Telegram / Discord scraping (Tavily + X via twitterapi.io only).
-- Auto-modification of agent code (Skills are additive prompts only).
+- Swig wallet (using BIP39 seed-derived hot wallet — disposable, $50).
+- Telegram / Discord scraping by sub-agents (Tavily + X via twitterapi.io only).
+- Auto-modification of trade execution code (Skills are additive prompts only).
 - Production-grade dashboard (minimal Hono + SSE for live demo).
+- Position monitor as its own process (folded into the expert cycle via `action: exit`).
 
 ---
 
