@@ -12,17 +12,20 @@ Academic anchor: [Adhi (@aelix0x) on AI forecasters as automated MMs](https://x.
 
 ---
 
-## 2. Goals (3 measurable, judged today)
+## 2. Goals (REFRAMED — what 16:00 SGT looks like)
+
+> **The 3h hands-off window is NOT a trading PnL competition. It's a BUILD window.** The agent grows the multi-agent system. Trades happen, but as validation that the pipeline works (place → monitor → cash-out), not as the primary success metric. Markets won't move much on a Sunday afternoon anyway.
 
 | # | Goal | Measure | Target |
 |---|---|---|---|
-| G1 | Place **real informed trades** during the 3h hands-off window | # of executed trades on Jupiter Predict mainnet | ≥ 5 |
-| G2 | **Beat the market** on at least some trades (price convergence to our forecast) | # trades where post-entry price moved ≥ 30% toward our forecast | ≥ 2 |
-| G3 | **Self-improve** the engine without human edits during the 3h | # active Skills written/improved by the agent in `/skills/active/` | ≥ 2 |
+| G1 | **Multi-agent system built**: agent self-writes new specialists during hands-off | # of specialists in `/agents/` written/improved by the agent (per SPECIALISTS_PLAN.md Tier 1) | ≥ 3 |
+| G2 | **End-to-end trading loop validated**: at least one full cycle of place + monitor + cash-out/claim | execution count of each phase in trail.jsonl | ≥ 1 of each |
+| G3 | **Autonomous operation**: zero human edits to source code from 13:00 to 16:00 SGT | git log shows no commits by Mathis in window; agent self-commits with `[skill]` or `[agent]` prefix only | 0 human commits |
 
-Stretch:
-- G4: positive PnL at 16:00 SGT (nice-to-have, not load-bearing for the pitch).
-- G5: 1 successful Startup Desk advisory call demonstrated live (Spark-fork preview).
+**Stretch**:
+- G4: ≥ 2 trades placed on distinct markets (1 already done = baseline).
+- G5: ≥ 1 Telegram question sent to Mathis and acted on his reply.
+- G6: ≥ 1 successful position claim (cash-out flow validated).
 
 ---
 

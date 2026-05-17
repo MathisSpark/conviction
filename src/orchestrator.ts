@@ -16,6 +16,7 @@ import * as jupiter from "./lib/jupiter.ts";
 import { evaluateAndTrade } from "./desks/public-markets.ts";
 import { reflectAndPropose } from "./lib/self-improve.ts";
 import { loadActiveSkills } from "./lib/skills.ts";
+import { sendToMathis, pollNewReplies } from "./lib/telegram.ts";
 import type { Market } from "./types.ts";
 import { appendFileSync } from "fs";
 
@@ -146,16 +147,54 @@ export async function runCycle(): Promise<void> {
   log({ type: "cycle_end", n: cycleNum, duration_ms: Date.now() - cycleStart });
 }
 
+const HANDSOFF_START = process.env.HANDSOFF_START;
+const HANDSOFF_END = process.env.HANDSOFF_END;
+
+function withinHandsoff(): { ok: boolean; reason: string } {
+  if (!HANDSOFF_END) return { ok: true, reason: "no HANDSOFF_END set, running forever" };
+  const now = Date.now();
+  const start = HANDSOFF_START ? new Date(HANDSOFF_START).getTime() : 0;
+  const end = new Date(HANDSOFF_END).getTime();
+  if (now < start) return { ok: false, reason: `before HANDSOFF_START (${HANDSOFF_START})` };
+  if (now > end) return { ok: false, reason: `past HANDSOFF_END (${HANDSOFF_END})` };
+  return { ok: true, reason: `inside window, ${Math.round((end - now) / 60000)} min remaining` };
+}
+
 export async function runForever(): Promise<void> {
   // graceful shutdown
   process.on("SIGINT", () => { log({ type: "shutdown" }); process.exit(0); });
 
+  // Boot ping to Telegram so Mathis knows we're alive.
+  try {
+    const r = await sendToMathis(`✦ Conviction is alive — entering loop. handsoff=${HANDSOFF_END ?? "infinite"}`);
+    log({ type: "telegram_boot", ok: r.ok, chatId: r.chatId, error: r.error });
+  } catch (e: any) {
+    log({ type: "telegram_boot_error", error: e.message });
+  }
+
   while (true) {
+    const window = withinHandsoff();
+    if (!window.ok) {
+      log({ type: "handsoff_done", reason: window.reason });
+      try { await sendToMathis(`✦ Conviction loop stopping: ${window.reason}`); } catch {}
+      process.exit(0);
+    }
     try {
       await runCycle();
     } catch (e: any) {
       log({ type: "cycle_error", error: e.message });
     }
+
+    // Poll Telegram for any guidance from Mathis (non-blocking, short).
+    try {
+      const updates = await pollNewReplies(2);
+      for (const u of updates) {
+        log({ type: "mathis_reply", text: u.text, from: u.from });
+      }
+    } catch (e: any) {
+      log({ type: "telegram_poll_error", error: e.message });
+    }
+
     await sleep(POLL_INTERVAL_MS);
   }
 }
