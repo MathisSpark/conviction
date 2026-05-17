@@ -16,39 +16,45 @@
 
 ## Slide 2 — What (60s)
 
-**Conviction** is an AI market maker built on Claude Agent SDK + Skills.
+**Conviction** = a fleet of dedicated AI experts on Solana prediction markets.
+
+The key insight: **markets are assigned, not discovered.** A human (the "Spark") tells the system which market matters, and the system spawns a dedicated expert agent for it. That expert lives on that market for the duration. It grows cumulative context, refines its forecast cycle by cycle, and trades when edge crystallizes.
 
 ```
-ORCHESTRATOR (Opus)
-  ├─ scans Jupiter Predict markets
-  ├─ dispatches to specialist subagents (Sonnet)
-  ├─ aggregates opinions, computes Kelly, executes via Solana wallet
-  └─ self-improves: writes new Skills/specialists during the run
+HUMAN: assigns marketId
+   │
+   ▼
+EXPERT AGENT (Claude Sonnet — one per market)
+  ├─ own /agents/<marketId>/AGENT.md (system prompt with full market criteria)
+  ├─ own state.json (persistent across cycles)
+  ├─ accumulates research notes over time (in-context memory)
+  ├─ decides each cycle: research deeper / trade / exit / hold
+  ├─ uses tools: Tavily search · read_url · X scrape · market data
+  └─ subject to Skills (filesystem-based capability modules, see slide 4)
 
-3 ACTIVE SKILLS at start:
-  • research-tech-companies     — TSLA/NVDA/AAPL/MSFT
-  • research-product-releases   — Gemini, Cybercab, Starship
-  • kelly-position-sizing       — fractional Kelly + safety caps
-
-POSITION MONITOR (parallel)
-  └─ exits on convergence to our forecast · claims winnings
-
-TELEGRAM BRIDGE
-  └─ pings Mathis when stuck, ingests his guidance
+SHARED INFRASTRUCTURE
+  • Same Solana wallet (BIP39 seed-derived, $50 disposable bankroll, $5 cap/trade)
+  • Same Jupiter Predict API for execution
+  • Same Telegram bridge for human-in-the-loop
+  • Same Skills (Anthropic Skills pattern, agent self-writes new ones)
 ```
+
+Today: 3 assigned markets, 3 experts running. Same architecture scales to N.
 
 ---
 
 ## Slide 3 — Live demo (90s)
 
-Switch to dashboard: http://localhost:3000
+Switch to terminal: `ls -la agents/` — 3 expert directories.
 
-1. **Open positions table** — show real money mainnet trades.
-2. **Active Skills count** — start with 3, end with N (depends on hands-off result).
-3. **Reasoning trace stream** — one specific trade, full reasoning:
-   - "Market priced Gemini score on FrontierMath at 92% YES"
-   - "Our research: only 38% (Gemini 3 Pro = 38%, no Gemini hit 45% on EpochAI)"
-   - "Edge 54%, bought NO at $0.54 — $5 stake → $9.25 if right"
+Pick one (e.g. POLY-1280315 — FrontierMath 60%+) and:
+
+1. **`cat agents/POLY-1280315/AGENT.md`** — show: the assigned market, the resolution criteria, the cycle count, the trades placed.
+2. **`cat agents/POLY-1280315/state.json | jq '.contextNotes[-3:]'`** — show the agent's CUMULATIVE NOTES, things it learned across cycles it spent on this market. *"This is how the agent gets smarter over time on the same market."*
+3. **`cat agents/POLY-1280315/state.json | jq '.lastForecast'`** — show the latest forecast with reasoning + history of how it evolved.
+4. Switch to dashboard http://localhost:3000 → show the trade tx + PnL.
+
+Key message: *"This is one of 3 dedicated experts. The orchestrator pattern that 'surveys markets' was the wrong abstraction — markets aren't a deal flow you surf, they're a research subject you settle on. The Spark fork is: drop the same expert on a Spark idea coin decision, and it spends 3 hours becoming the world's best informed agent on whether that decision will be capital-efficient."*
 
 ---
 
