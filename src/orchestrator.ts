@@ -153,11 +153,11 @@ const HANDSOFF_END = process.env.HANDSOFF_END;
 function withinHandsoff(): { ok: boolean; reason: string } {
   if (!HANDSOFF_END) return { ok: true, reason: "no HANDSOFF_END set, running forever" };
   const now = Date.now();
-  const start = HANDSOFF_START ? new Date(HANDSOFF_START).getTime() : 0;
   const end = new Date(HANDSOFF_END).getTime();
-  if (now < start) return { ok: false, reason: `before HANDSOFF_START (${HANDSOFF_START})` };
+  // Don't gate on HANDSOFF_START — pre-warming the loop before the public
+  // window is fine. Only HANDSOFF_END is a hard stop.
   if (now > end) return { ok: false, reason: `past HANDSOFF_END (${HANDSOFF_END})` };
-  return { ok: true, reason: `inside window, ${Math.round((end - now) / 60000)} min remaining` };
+  return { ok: true, reason: `${Math.round((end - now) / 60000)} min remaining until HANDSOFF_END` };
 }
 
 export async function runForever(): Promise<void> {

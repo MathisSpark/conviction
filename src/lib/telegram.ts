@@ -54,10 +54,12 @@ export async function sendToMathis(text: string): Promise<{ ok: boolean; chatId?
     }
     saveChatId(chatId);
   }
+  // No parse_mode by default — Markdown breaks easily on URLs, underscores,
+  // parens. Use plain text. Callers can pass formatted strings as-is.
   const r = await fetch(tgUrl("sendMessage"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, text, parse_mode: "Markdown" }),
+    body: JSON.stringify({ chat_id: chatId, text }),
   });
   const json: any = await r.json();
   if (!json.ok) return { ok: false, chatId, error: json.description };
@@ -81,7 +83,23 @@ export type Update = {
   text: string;
   from: string;
   ts: number;
+  voiceFileId?: string; // when Mathis sends a voice note
 };
+
+/**
+ * Download a Telegram file by file_id and save to local path.
+ * For voice notes — returns local .ogg path. Transcription is upstream.
+ */
+export async function downloadFile(fileId: string, localPath: string): Promise<string> {
+  const meta = await fetch(`${tgUrl("getFile")}?file_id=${fileId}`).then(r => r.json()) as any;
+  if (!meta.ok) throw new Error(`getFile failed: ${meta.description}`);
+  const url = `https://api.telegram.org/file/bot${TOKEN}/${meta.result.file_path}`;
+  const r = await fetch(url);
+  const buf = Buffer.from(await r.arrayBuffer());
+  const { writeFileSync } = await import("fs");
+  writeFileSync(localPath, buf);
+  return localPath;
+}
 
 /**
  * Long-poll new updates. Persists offset so we never re-process old replies.
@@ -96,12 +114,15 @@ export async function pollNewReplies(timeoutSec = 10): Promise<Update[]> {
   for (const u of updates) {
     if (u.update_id > maxId) maxId = u.update_id;
     const msg = u.message ?? u.edited_message;
-    if (!msg?.text) continue;
+    if (!msg) continue;
+    const text = msg.text ?? (msg.voice ? `[VOICE NOTE — file_id=${msg.voice.file_id}, dur=${msg.voice.duration}s]` : null);
+    if (!text) continue;
     out.push({
       updateId: u.update_id,
-      text: msg.text,
+      text,
       from: msg.from?.username ?? msg.from?.first_name ?? "?",
       ts: (msg.date ?? Math.floor(Date.now() / 1000)) * 1000,
+      voiceFileId: msg.voice?.file_id,
     });
     // Also auto-learn chat_id
     if (msg.chat?.id) saveChatId(msg.chat.id);
