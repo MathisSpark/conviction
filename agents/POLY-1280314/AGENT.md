@@ -15,12 +15,18 @@ This market will resolve according to the Epoch AI’s Frontier Math benchmarkin
 The primary resolution source will be information from EpochAI; however, a consensus of credible reporting may also be used. 
 
 **Assigned at**: 2026-05-17T07:57:42.572Z
-**Cycles**: 0
+**Cycles**: 3
 **Trades placed**: 0
 **Exits**: 0
 
 ## Latest forecast
-(none yet)
+- pYES: 0.1
+- confidence: 0.75
+- side: NO
+- reasoning: Starting from the base rate of 0.28, evidence strongly updates downward: all evaluated Gemini models (3 Pro, 3.1 Pro, 3 Flash) are clustered at 36-38% on FrontierMath Tiers 1-3 with no upward trajectory, the only model to reach 50% is GPT-5.4 (OpenAI), and the most capable Gemini variant (Deep Think) was never officially evaluated and appears unlikely to be before the June 30 deadline. OpenAI's structural advantage (exclusive access to training data/solutions) further disadvantages Gemini on this specific benchmark. Six resolution ambiguities warrant a confidence penalty (~0.10), but the directional signal is overwhelmingly NO. The existing NO position at avg $0.68 is deeply profitable (mark ~$0.31, our forecast ~$0.10), but since the market hasn't converged within 3 cents of our forecast (0.31 vs 0.10), we hold rather than exit.
 
 ## Recent research notes
-
+1. [cycle 2] Best Gemini score is 38% as of mid-2026 — 12pp gap with ~1 month to deadline, and Gemini 3.1 Pro showed no improvement over 3 Pro.
+2. [cycle 2] Benchmark review by Epoch AI (flagging ~1/3 of problems as potentially flawed) could shift scores after human review, but unlikely to boost Gemini to 50% in remaining time.
+3. [cycle 3] GPT-5.4 is only model at 50%; all Gemini variants stuck at 36-38% with no improvement trend through Feb 2026
+4. [cycle 3] Gemini Deep Think never evaluated on official leaderboard; Epoch still awaiting API access as of Feb 2026 — this is the last realistic path to YES

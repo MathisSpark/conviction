@@ -54,7 +54,6 @@ See [`docs/startup-desk-demo.md`](docs/startup-desk-demo.md) for a live example 
 - **Tavily** — web search for the research tool
 - **twitterapi.io** — X scrape (optional)
 - **Hono** — minimal dashboard with SSE for live trail
-- **Telegram Bot API** — human-in-the-loop pings
 
 ## Repo layout
 
@@ -83,7 +82,6 @@ conviction/
 │   │   ├── kelly.ts                   ← fractional Kelly + safety caps
 │   │   ├── skills.ts                  ← Skills loader + writer/promoter
 │   │   ├── self-improve.ts            ← reflect + propose + accept
-│   │   ├── telegram.ts                ← bot bridge for human guidance
 │   │   ├── research-tools.ts          ← Tavily / read_url / X scrape
 │   │   └── env.ts                     ← .env loader (override fix)
 │   ├── desks/
@@ -108,7 +106,7 @@ conviction/
 bun install
 cp .env.example .env
 # fill in: ANTHROPIC_API_KEY, JUPITER_API_KEY, TAVILY_API_KEY,
-#         SOLANA_SEED_PHRASE, SOLANA_RPC_URL, TELEGRAM_BOT_TOKEN,
+#         SOLANA_SEED_PHRASE, SOLANA_RPC_URL,
 #         ASSIGNED_MARKETS=POLY-X,POLY-Y,POLY-Z
 
 bun run src/experts.ts        # main runtime — dedicated agents per assigned market

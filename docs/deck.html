@@ -250,6 +250,13 @@
     <div class="bar dim" style="height:1%"></div>
   </div>
   <div class="chart-label">3 markets get the money. The other 12 are dead. → most questions get no answer.</div>
+  <div class="footnote">
+    <strong>The academic problem has a name: <em>Minimum Viable Liquidity (MVL)</em>.</strong>
+    <br>· Hanson, R. (2003). <a href="https://mason.gmu.edu/~rhanson/mktscore.pdf" target="_blank" style="color: var(--accent);">Logarithmic Market Scoring Rules</a> — subsidized AMMs to bootstrap thin markets.
+    <br>· Hanson, R. (1999). <a href="https://mason.gmu.edu/~rhanson/decisionmarkets.pdf" target="_blank" style="color: var(--accent);">Decision Markets</a> — using markets to inform decisions.
+    <br>· Wolfers &amp; Zitzewitz (2004). <a href="https://www.nber.org/papers/w10359" target="_blank" style="color: var(--accent);">Prediction Markets (NBER)</a> — adverse selection + thin liquidity dynamics.
+    <br>· Adhi (2026). <a href="https://x.com/aelix0x/status/2053928032318988366" target="_blank" style="color: var(--accent);">"AI forecasters can drop the MVL floor"</a> — the bridge to our solution.
+  </div>
   <div class="scroll-hint">scroll ↓</div>
 </section>
 
@@ -275,11 +282,11 @@
 <section class="slide">
   <div class="slide-num">03 / 04 · SOLUTION</div>
   <div class="brand">CONVICTION</div>
-  <h1>We put <span class="accent">AI experts</span><br>on small markets.</h1>
+  <h1>We put <span class="accent">AI experts</span><br>on small markets.<br><span style="font-size: 0.6em; color: var(--fg-dim);">And each expert deploys its own team.</span></h1>
   <p class="lead">
-    Each market gets <strong>one dedicated AI agent</strong>. It lives there. It reads everything online about that market. It places informed bets with <strong>its own real money wallet</strong>. It learns over time from its own trades.
+    Each market gets <strong>one dedicated AI expert</strong> with its own wallet. The expert doesn't research alone — <span class="accent">it spawns 4 specialist sub-agents in parallel</span> for every cycle: one reads the resolution criteria, one gathers fresh web evidence, one computes historical base rates, one aggregates everything into a calibrated bet.
     <br><br>
-    Stack 1000 of these agents in parallel and <span class="accent">small markets start working</span> — because there's finally informed money in them.
+    Stack 1000 of these expert teams in parallel and <span class="accent">small markets start working</span> — because there's finally informed money in them.
   </p>
 
   <div class="arch">
@@ -290,48 +297,39 @@
     </div>
     <div class="arch-arrow">→</div>
     <div class="arch-box">
-      <div class="title">One AI expert</div>
-      <div class="body">+ its own wallet</div>
-      <div class="meta">Reads filings · X · supply chain · news</div>
+      <div class="title">Expert team</div>
+      <div class="body">1 orchestrator<br>+ 4 specialists</div>
+      <div class="meta">+ its own wallet</div>
     </div>
   </div>
 
-  <div class="stack">
-    <div class="stack-row">
-      <div class="arch-box" style="padding:14px">
-        <div class="body" style="font-size:16px">"Will Gemini ship by July?"</div>
-      </div>
-      <div class="arch-arrow">→</div>
-      <div class="arch-box" style="padding:14px">
-        <div class="body" style="font-size:16px">expert + wallet</div>
-      </div>
+  <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 24px; max-width: 900px;">
+    <div class="arch-box" style="padding: 14px; border-left: 3px solid var(--accent);">
+      <div class="title" style="font-size: 10px;">Sub-agent 1</div>
+      <div class="body" style="font-size: 14px;">Resolution Analyst</div>
+      <div class="meta">parses criteria + ambiguities</div>
     </div>
-    <div class="stack-row fade-1">
-      <div class="arch-box" style="padding:14px">
-        <div class="body" style="font-size:16px">"Will Starship launch May 22?"</div>
-      </div>
-      <div class="arch-arrow">→</div>
-      <div class="arch-box" style="padding:14px">
-        <div class="body" style="font-size:16px">expert + wallet</div>
-      </div>
+    <div class="arch-box" style="padding: 14px; border-left: 3px solid var(--accent);">
+      <div class="title" style="font-size: 10px;">Sub-agent 2</div>
+      <div class="body" style="font-size: 14px;">Evidence Gatherer</div>
+      <div class="meta">live web + X + filings</div>
     </div>
-    <div class="stack-row fade-2">
-      <div class="arch-box" style="padding:14px">
-        <div class="body" style="font-size:16px">"…"</div>
-      </div>
-      <div class="arch-arrow">→</div>
-      <div class="arch-box" style="padding:14px">
-        <div class="body" style="font-size:16px">expert + wallet</div>
-      </div>
+    <div class="arch-box" style="padding: 14px; border-left: 3px solid var(--accent);">
+      <div class="title" style="font-size: 10px;">Sub-agent 3</div>
+      <div class="body" style="font-size: 14px;">Base Rate Historian</div>
+      <div class="meta">comparable past cases</div>
     </div>
-    <div class="stack-row fade-3">
-      <div class="arch-box" style="padding:14px"></div>
-      <div class="arch-arrow">→</div>
-      <div class="arch-box" style="padding:14px"></div>
+    <div class="arch-box" style="padding: 14px; border-left: 3px solid var(--accent);">
+      <div class="title" style="font-size: 10px;">Sub-agent 4</div>
+      <div class="body" style="font-size: 14px;">Pricing Math</div>
+      <div class="meta">aggregates + decides</div>
     </div>
   </div>
 
-  <div class="multiply"><strong>× 1000+</strong> &nbsp;·&nbsp; one dedicated AI per market &nbsp;·&nbsp; running 24/7</div>
+  <div class="multiply"><strong>1 expert × 4 specialists × N markets</strong> &nbsp;·&nbsp; agents that work with other agents &nbsp;·&nbsp; 24/7</div>
+  <div class="footnote" style="margin-top: 24px;">
+    Each specialist is its own Claude call with its own focused job. The aggregator <em>cites which sub-agent supplied which insight</em>. In one run, the aggregator caught that the historian's prior was outdated (training cutoff) and overrode it with live evidence — that's <strong>multi-agent meta-reasoning</strong>.
+  </div>
   <div class="scroll-hint">scroll ↓</div>
 </section>
 

@@ -90,7 +90,7 @@ Conviction is a <strong>fleet of dedicated AI experts</strong> that each cover o
 <div class="diagram">
 <pre class="mermaid">
 flowchart LR
-    M[Mathis the Spark] --> E[experts.ts runner]
+    M[Human operator assigns markets] --> E[experts.ts runner]
     E --> A1[Expert A POLY-1280315]
     E --> A2[Expert B POLY-1280314]
     E --> A3[Expert C POLY-2268715]
@@ -98,10 +98,6 @@ flowchart LR
     A2 --> JP
     A3 --> JP
     JP --> W[Shared Solana wallet 50 USDC]
-    A1 --> TG[Telegram bot ClaudeHackathonBot]
-    A2 --> TG
-    A3 --> TG
-    TG --> M
 </pre>
 </div>
 
@@ -132,9 +128,8 @@ flowchart TD
     Kelly --> Order[Build order via Jupiter and sign and send via wallet]
     Action -->|exit| Close[Close position via Jupiter returns winnings or stop-loss]
     Action -->|hold| Save[Save updated state.json]
-    Order --> TGPing[Telegram ping Mathis]
-    Close --> TGPing
-    TGPing --> Save
+    Order --> Save
+    Close --> Save
     Save --> End[Cycle N ends sleep 90s]
 </pre>
 </div>
