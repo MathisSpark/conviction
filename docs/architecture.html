@@ -64,6 +64,7 @@
   <div class="nav-inner">
     <a href="#overview">Overview</a>
     <a href="#expert">Expert loop</a>
+    <a href="#multi-agent">Multi-agent</a>
     <a href="#per-expert">Expert files</a>
     <a href="#skills">Self-improvement</a>
     <a href="#data-flow">Data flow</a>
@@ -144,6 +145,72 @@ flowchart TD
 Each cycle, the expert receives <strong>everything it ever learned about this market</strong> as part of its system prompt. By cycle 10, it has 20+ notes from prior cycles, knows what it bet and when, and can detect what changed rather than redoing cold research every time. <em>This is impossible with a discovery-mode orchestrator</em> which forgets its prior research at every market switch.
 </p>
 </div>
+
+<!-- 2.5 MULTI-AGENT DISPATCH -->
+<h2 id="multi-agent">2.5 · Multi-agent dispatch — what happens inside one cycle</h2>
+
+<p class="lead">The expert is <strong>not one Claude call</strong>. Each cycle, the expert orchestrates 4 separate sub-agents — each a focused Claude call with its own system prompt — and aggregates their structured outputs into a final decision.</p>
+
+<div class="diagram">
+<pre class="mermaid">
+flowchart TD
+    EXP[Expert orchestrator per market] --> RES[Resolution Analyst Haiku]
+    RES --> PAR{Parallel dispatch}
+    PAR --> EVI[Evidence Gatherer Sonnet plus tools]
+    PAR --> BAS[Base Rate Historian Sonnet]
+    EVI --> AGG[Pricing Math Sonnet aggregator]
+    BAS --> AGG
+    RES --> AGG
+    AGG --> DEC[FinalDecision forecast plus action]
+    DEC --> EXP
+</pre>
+</div>
+
+<h3>What each sub-agent does</h3>
+
+<table>
+<thead><tr><th>Sub-agent</th><th>Model</th><th>Tools</th><th>Output</th></tr></thead>
+<tbody>
+<tr>
+  <td><code>resolution-analyst</code></td>
+  <td>Haiku</td>
+  <td>none</td>
+  <td>Exact criteria, resolution source, deadline, ambiguities, edge cases</td>
+</tr>
+<tr>
+  <td><code>evidence-gatherer</code></td>
+  <td>Sonnet</td>
+  <td>search_web, read_url, get_x_posts, get_market_details</td>
+  <td>4-8 signals with quotes and weights, net direction, fresh findings vs prior notes, confidence</td>
+</tr>
+<tr>
+  <td><code>base-rate-historian</code></td>
+  <td>Sonnet</td>
+  <td>none (training knowledge only)</td>
+  <td>Comparable past cases, base rate 0-1, reasoning</td>
+</tr>
+<tr>
+  <td><code>pricing-math</code></td>
+  <td>Sonnet</td>
+  <td>none (consumes the other 3)</td>
+  <td>Final probabilityYes, confidence, side, edgePct, action (trade/exit/hold), citations</td>
+</tr>
+</tbody>
+</table>
+
+<div class="card">
+<div class="card-title">Why split into 4 sub-agents (not one big call)</div>
+<ul>
+<li><strong>Separation of concerns</strong>: each sub-agent has one job and one output shape, no confusion between research and decision.</li>
+<li><strong>Parallelism</strong>: evidence-gatherer + base-rate-historian run concurrently, halving wall-clock per cycle.</li>
+<li><strong>Auditability</strong>: each sub-agent's structured output is logged separately to <code>expert-trail.jsonl</code> (search for <code>multi_agent_trace</code> events).</li>
+<li><strong>Composability</strong>: a future cycle can replace just the base-rate-historian without touching the rest.</li>
+<li><strong>Pricing transparency</strong>: the aggregator <code>pricing-math</code> cites which sub-agent supplied which insight in its citations field.</li>
+</ul>
+</div>
+
+<h3>Cost per cycle</h3>
+<p>Multi-agent uses ~4 Claude calls per market per cycle vs 1 in single-specialist mode. With 3 markets and 90s sweep interval, that is ~12 Claude calls per minute peak. Cost: ~$0.30-0.40 per cycle (Haiku is cheap, Sonnet is the bulk). Toggleable via <code>USE_MULTI_AGENT=false</code> in .env.</p>
 
 <!-- 3. PER EXPERT -->
 <h2 id="per-expert">3 · One expert's brain — files on disk</h2>
