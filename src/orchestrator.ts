@@ -28,9 +28,10 @@ export async function discoverMarkets(): Promise<Market[]> {
   const all: Market[] = [];
   for (const q of DEMO_QUERIES) {
     try {
-      const events = await jupiter.searchEvents(q, 10);
+      const events = await jupiter.searchEvents(q, 10, { includeMarkets: true });
       for (const ev of events) {
         for (const m of ev.markets ?? []) {
+          if (m.status !== "open") continue;
           if (seenMarkets.has(m.marketId)) continue;
           all.push(normalizeMarket(m, ev));
         }
@@ -42,32 +43,53 @@ export async function discoverMarkets(): Promise<Market[]> {
   return rankCandidates(all).slice(0, 3); // top 3 per cycle to keep cost bounded
 }
 
+/**
+ * Jupiter returns prices in micro USD (1_000_000 = $1.00). Outcome titles
+ * are per-market (e.g. "↓ $405", "Yes", "No"). Each event has metadata.title
+ * for the umbrella question.
+ */
 function normalizeMarket(m: any, ev: any): Market {
+  const eventTitle = ev.metadata?.title ?? ev.title ?? "(no title)";
+  const marketTitle = m.title ? ` — ${m.title}` : "";
+  const closeTimeIso = m.closeTime
+    ? new Date(m.closeTime * 1000).toISOString()
+    : ev.metadata?.closeTime ?? new Date(Date.now() + 86400000).toISOString();
+
+  const buyYes = (m.pricing?.buyYesPriceUsd ?? 500000) / 1_000_000;
+  const sellYes = (m.pricing?.sellYesPriceUsd ?? 500000) / 1_000_000;
+  const buyNo = (m.pricing?.buyNoPriceUsd ?? 500000) / 1_000_000;
+  const sellNo = (m.pricing?.sellNoPriceUsd ?? 500000) / 1_000_000;
+
   return {
     marketId: m.marketId ?? m.id,
     eventId: ev.eventId ?? ev.id,
-    question: ev.title ?? m.question ?? "(no title)",
+    question: `${eventTitle}${marketTitle}`,
     category: ev.category ?? "unknown",
-    outcomes: m.outcomes ?? [
-      { label: "YES", isYes: true, buyPrice: m.yesPrice ?? 0.5, sellPrice: m.yesPrice ?? 0.5 },
-      { label: "NO", isYes: false, buyPrice: m.noPrice ?? 0.5, sellPrice: m.noPrice ?? 0.5 },
+    outcomes: [
+      { label: "YES", isYes: true, buyPrice: buyYes, sellPrice: sellYes },
+      { label: "NO", isYes: false, buyPrice: buyNo, sellPrice: sellNo },
     ],
-    endsAt: ev.endsAt ?? m.endsAt ?? new Date(Date.now() + 86400000).toISOString(),
-    volumeUsd: Number(ev.volumeUsd ?? m.volumeUsd ?? 0),
-    liquidityUsd: Number(ev.liquidityUsd ?? m.liquidityUsd ?? 0),
+    endsAt: closeTimeIso,
+    volumeUsd: Number(ev.volumeUsd ?? 0) / 1_000_000,
+    // Jupiter doesn't expose a clean liquidity number; use per-market volume as proxy.
+    liquidityUsd: Number(m.pricing?.volume ?? 0) / 1_000_000,
   };
 }
 
 function rankCandidates(markets: Market[]): Market[] {
-  // Prefer: short resolution window + decent liquidity + not yet traded.
+  // Prefer: short resolution window + non-degenerate price + not yet traded.
   return markets
-    .filter(m => m.liquidityUsd >= 500)
+    .filter(m => {
+      const yes = m.outcomes.find(o => o.isYes)?.buyPrice ?? 0;
+      // Skip markets pinned to 0 or 1 — no edge to find.
+      return yes > 0.02 && yes < 0.98;
+    })
     .map(m => ({
       m,
       score:
-        (m.liquidityUsd / 1000) +
-        (m.volumeUsd / 10000) +
-        Math.max(0, 7 - daysUntil(m.endsAt)) * 2,
+        (m.volumeUsd / 1000) +
+        Math.max(0, 7 - daysUntil(m.endsAt)) * 5 +
+        (m.liquidityUsd / 100),
     }))
     .sort((a, b) => b.score - a.score)
     .map(x => x.m);

@@ -43,8 +43,9 @@ export async function listEvents(opts?: { category?: string; includeMarkets?: bo
   return get<any[]>(`/events?${qs.toString()}`);
 }
 
-export async function searchEvents(query: string, limit = 20) {
+export async function searchEvents(query: string, limit = 20, opts?: { includeMarkets?: boolean }) {
   const qs = new URLSearchParams({ query, limit: String(limit) });
+  if (opts?.includeMarkets) qs.set("includeMarkets", "true");
   return get<any[]>(`/events/search?${qs.toString()}`);
 }
 
