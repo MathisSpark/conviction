@@ -326,9 +326,14 @@
     </div>
   </div>
 
-  <div class="multiply"><strong>1 expert × 4 specialists × N markets</strong> &nbsp;·&nbsp; agents that work with other agents &nbsp;·&nbsp; 24/7</div>
+  <div style="margin-top: 14px; max-width: 900px; padding: 14px 18px; border: 1px dashed var(--accent); border-radius: 10px; background: rgba(74, 222, 128, 0.05);">
+    <span style="color: var(--accent); font-weight: 600;">+ Sub-agent N (when needed)</span>
+    <span style="color: var(--fg-dim);"> · the expert spawns a brand-new specialist on the fly if it senses a domain gap. The new agent is written as an Anthropic Skill and loaded into next cycle. <em>Already triggered twice today — the team wrote </em><code style="background: var(--bg); padding: 2px 6px; border-radius: 4px; color: var(--accent); font-size: 11px;">ai-benchmark-resolution-sourcing</code><em> and </em><code style="background: var(--bg); padding: 2px 6px; border-radius: 4px; color: var(--accent); font-size: 11px;">multi-bracket-consistency</code><em> autonomously.</em>
+  </div>
+
+  <div class="multiply"><strong>1 expert × N specialists × N markets</strong> &nbsp;·&nbsp; agents that work with other agents &nbsp;·&nbsp; and write new ones &nbsp;·&nbsp; 24/7</div>
   <div class="footnote" style="margin-top: 24px;">
-    Each specialist is its own Claude call with its own focused job. The aggregator <em>cites which sub-agent supplied which insight</em>. In one run, the aggregator caught that the historian's prior was outdated (training cutoff) and overrode it with live evidence — that's <strong>multi-agent meta-reasoning</strong>.
+    Each specialist is its own Claude call with its own focused job. The aggregator <em>cites which sub-agent supplied which insight</em>. In one run, the aggregator caught that the historian's prior was outdated (training cutoff) and overrode it with live evidence — that's <strong>multi-agent meta-reasoning</strong>. In another cycle, the team decided its own NO position was wrong and exited on-chain autonomously.
   </div>
   <div class="scroll-hint">scroll ↓</div>
 </section>
@@ -339,7 +344,7 @@
   <div class="brand">CONVICTION</div>
   <h1>Tested today.<br><span class="accent">Real money. Real trades. Solana mainnet.</span></h1>
   <p class="lead">
-    3 expert agents. 3 assigned markets on <strong>Jupiter Predict</strong>. Each agent has its own wallet, places its own bets, and we know it works <span class="accent">when the wallet grows</span>. That's the KPI. Simple.
+    3 expert agents, each with 4 sub-specialists, running on <strong>Jupiter Prediction</strong> — the Solana-native interface that brings <strong>Polymarket markets on-chain</strong>. Each expert team has its own wallet, places its own bets via Jupiter, and we know it works <span class="accent">when the wallet grows</span>. That's the KPI. Simple.
   </p>
 
   <div class="proof">
@@ -359,9 +364,12 @@
       <div class="stat-sub">Improved its own research mid-run</div>
     </div>
     <div class="stat-card">
-      <div class="stat-num">1</div>
-      <div class="stat-label">Auto stop-loss on chain</div>
-      <div class="stat-sub"><a href="https://solscan.io/tx/5pdSUAP7TX4LBN2oBJ124XtSwuKdUN4ugyvefgJrz4TeyYiso2Ct2oPKBb7RBfcrnnXXrCpznsykoXWFuyGEbg1K" target="_blank">tx 5pdSUAP…</a></div>
+      <div class="stat-num">2</div>
+      <div class="stat-label">Autonomous on-chain exits</div>
+      <div class="stat-sub">
+        <a href="https://solscan.io/tx/5pdSUAP7TX4LBN2oBJ124XtSwuKdUN4ugyvefgJrz4TeyYiso2Ct2oPKBb7RBfcrnnXXrCpznsykoXWFuyGEbg1K" target="_blank">tx 5pdSUAP…</a> (stop-loss)<br>
+        <a href="https://solscan.io/tx/RtxBTnUkXYZZ5vyKXvtQN89nJGywbssY5C9avCN2dBDvB47c2tcnnCxAggtb4vcCuhYTF3LGRgZphzfymLuNTEE" target="_blank">tx RtxBTnUk…</a> (multi-agent forecast reversal)
+      </div>
     </div>
   </div>
 

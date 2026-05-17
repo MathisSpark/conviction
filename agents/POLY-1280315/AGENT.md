@@ -15,19 +15,19 @@ This market will resolve according to the Epoch AI’s Frontier Math benchmarkin
 The primary resolution source will be information from EpochAI; however, a consensus of credible reporting may also be used. 
 
 **Assigned at**: 2026-05-17T07:55:38.299Z
-**Cycles**: 3
+**Cycles**: 4
 **Trades placed**: 0
 **Exits**: 0
 
 ## Latest forecast
-- pYES: 0.12
-- confidence: 0.75
+- pYES: 0.1
+- confidence: 0.78
 - side: NO
-- reasoning: All three sub-agents firmly align toward NO. The base rate is ~28%, but evidence strongly pushes lower: best Gemini score is officially 38% (Gemini 3 Pro) on Tiers 1–3, while the overall SOTA across all models is GPT-5.5 Pro at 52.4% — still 7.6pp below the 60% threshold with only ~6 weeks remaining. The Epoch AI leaderboard is frozen under an active review with no corrected scores released and no timeline given, making an official qualifying result before June 30, 2026 operationally improbable. Five resolution ambiguities warrant a modest downward confidence adjustment. The existing NO position at $0.850 avg vs. mark at $0.454 has moved substantially in our favor; our probabilityYes of 0.12 implies NO value ~$0.88, still well above current mark price of $0.454, so the position has not converged within 3 cents — hold.
+- reasoning: All three sub-agents remain firmly aligned toward NO. The base rate of ~28% is pushed substantially lower by evidence: best Gemini Tiers 1-3 score is ~36-38% (Gemini 3 Flash/Pro), the overall SOTA across all models is ~47-52%, and no model has crossed 60% on the official Epoch AI leaderboard. The leaderboard remains frozen under an active human review of fatal errors flagged in ~1/3 of problems, making official publication of any qualifying Gemini score before June 30, 2026 operationally near-impossible. Five resolution ambiguities warrant a modest confidence penalty. The existing NO position at avg $0.850 vs. mark ~$0.453 has moved heavily in our favor; our probabilityYes of 0.10 implies NO fair value ~$0.90, still well above the mark price — the position has not converged within 3 cents of our forecast, so we hold.
 
 ## Recent research notes
-1. [cycle 1] Market implies ~55% YES but evidence strongly favors NO (~72%). Existing NO position at $0.85 is underwater (mark $0.453) due to YES market enthusiasm, possibly from non-leaderboard Gemini evals being conflated.
-2. [cycle 2] Mark price $0.453 implies market now sees ~45% YES probability — still above our 15% estimate, suggesting continued NO edge but position already open
-3. [cycle 2] Leaderboard correction freeze (1/3 fatal errors, no updated scores) is a critical blocker for resolution before June 30 deadline
-4. [cycle 3] Best Gemini score remains 38% (Gemini 3 Pro) vs. 60% threshold; gap is ~22pp with <6 weeks to deadline.
-5. [cycle 3] Epoch AI leaderboard frozen since 2026-05-11 with no corrected scores released — operational barrier to resolution even if a model improves.
+1. [cycle 2] Leaderboard correction freeze (1/3 fatal errors, no updated scores) is a critical blocker for resolution before June 30 deadline
+2. [cycle 3] Best Gemini score remains 38% (Gemini 3 Pro) vs. 60% threshold; gap is ~22pp with <6 weeks to deadline.
+3. [cycle 3] Epoch AI leaderboard frozen since 2026-05-11 with no corrected scores released — operational barrier to resolution even if a model improves.
+4. [cycle 4] Epoch AI leaderboard still frozen as of latest check (May 11, 2026 notice); no corrected scores released — operational barrier persists with <4 weeks to deadline.
+5. [cycle 4] NO position at avg $0.850 remains deeply in-the-money vs. mark ~$0.453; gap between fair value (~$0.90) and mark (~$0.453) exceeds 3 cents — hold, do not exit.
