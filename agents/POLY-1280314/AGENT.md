@@ -15,19 +15,19 @@ This market will resolve according to the Epoch AI’s Frontier Math benchmarkin
 The primary resolution source will be information from EpochAI; however, a consensus of credible reporting may also be used. 
 
 **Assigned at**: 2026-05-17T07:57:42.572Z
-**Cycles**: 4
+**Cycles**: 5
 **Trades placed**: 0
 **Exits**: 0
 
 ## Latest forecast
-- pYES: 0.07
-- confidence: 0.82
+- pYES: 0.05
+- confidence: 0.85
 - side: NO
-- reasoning: Starting from the base rate of 0.30, the evidence updates strongly downward: Gemini is completely absent from the official FrontierMath leaderboard (only OpenAI models listed), the best Gemini variant (3.1 Pro) plateaued at ~38% with no improvement over its predecessor, and even the leading GPT-5.4 at 47.6% hasn't crossed 50% yet. The Epoch AI benchmark integrity review (flagging ~1/3 of problems as flawed) further reduces the probability of any new Gemini evaluation being officially published before June 30, 2026. Four resolution ambiguities warrant a modest confidence penalty (~0.05). The existing NO position at avg $0.68 with mark at $0.31 is deeply profitable, but since mark ($0.31) has not converged within 3 cents of our forecast (~$0.07), we hold the position.
+- reasoning: Starting from the base rate of 0.28, evidence updates strongly downward: Gemini 3 Pro's best official score is 38% (12pp below threshold), Gemini 3.1 Pro showed no improvement, and the May 11 Epoch AI benchmark freeze blocks new evaluations with no timeline for resumption before the June 30 deadline. The structural barrier of the freeze alone makes a YES resolution near-impossible. Four resolution ambiguities apply a modest ~0.05 confidence penalty. The existing NO position at avg $0.68 has mark at $0.31, well above the ~$0.05 forecast — market has not converged within 3 cents of our probability, so we hold rather than exit. No new trade is warranted since a position is already open.
 
 ## Recent research notes
-1. [cycle 2] Benchmark review by Epoch AI (flagging ~1/3 of problems as potentially flawed) could shift scores after human review, but unlikely to boost Gemini to 50% in remaining time.
-2. [cycle 3] GPT-5.4 is only model at 50%; all Gemini variants stuck at 36-38% with no improvement trend through Feb 2026
-3. [cycle 3] Gemini Deep Think never evaluated on official leaderboard; Epoch still awaiting API access as of Feb 2026 — this is the last realistic path to YES
-4. [cycle 4] Epoch AI benchmark freeze (May 11 announcement) makes pre-deadline Gemini evaluation nearly impossible — strongest new evidence for NO
-5. [cycle 4] GPT-5.4 leads at 47.6% but still below 50%; Gemini absent from leaderboard entirely as of May 17, 2026
+1. [cycle 3] Gemini Deep Think never evaluated on official leaderboard; Epoch still awaiting API access as of Feb 2026 — this is the last realistic path to YES
+2. [cycle 4] Epoch AI benchmark freeze (May 11 announcement) makes pre-deadline Gemini evaluation nearly impossible — strongest new evidence for NO
+3. [cycle 4] GPT-5.4 leads at 47.6% but still below 50%; Gemini absent from leaderboard entirely as of May 17, 2026
+4. [cycle 5] Epoch AI benchmark freeze (May 11, 2026) with no resumption timeline is the dominant near-term blocker for any new Gemini evaluation before June 30 deadline.
+5. [cycle 5] Mark price $0.31 remains far above our ~$0.05 forecast; hold NO position — exit only if mark converges below ~$0.08 or forecast reverses.
